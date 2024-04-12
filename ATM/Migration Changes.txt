@@ -1,0 +1,39 @@
+Migration Changes:
+
+1. Introducing FOREIGN KEY constraint 'FK_Tbl_Material_Tbl_MaterialSubCategory_MaterialSubCategoryID' on table 'Tbl_Material' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+2. Introducing FOREIGN KEY constraint 'FK_Tbl_Material_Tbl_MaterialType_MaterialTypeID' on table 'Tbl_Material' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+3. Introducing FOREIGN KEY constraint 'FK_Tbl_BOM_Tbl_ProcessPlan_ProcessPlanID' on table 'Tbl_BOM' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+4. Introducing FOREIGN KEY constraint 'FK_Tbl_DetailedPurchaseOrder_Tbl_MaterialType_MaterialTypeID' on table 'Tbl_DetailedPurchaseOrder' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+5. Introducing FOREIGN KEY constraint 'FK_Tbl_DispatchIn_Tbl_MaterialType_MaterialTypeID' on table 'Tbl_DispatchIn' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+6. Introducing FOREIGN KEY constraint 'FK_Tbl_DispatchOut_Tbl_MaterialType_MaterialTypeID' on table 'Tbl_DispatchOut' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+7. Introducing FOREIGN KEY constraint 'FK_Tbl_QualityIn_Tbl_MaterialType_MaterialTypeID' on table 'Tbl_QualityIn' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+8. Introducing FOREIGN KEY constraint 'FK_Tbl_QualityOut_Tbl_MaterialType_MaterialTypeID' on table 'Tbl_QualityOut' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+9. Introducing FOREIGN KEY constraint 'FK_Tbl_TemperoryPurchaseOrder_Tbl_MaterialType_MaterialTypeID' on table 'Tbl_TemperoryPurchaseOrder' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+10. Introducing FOREIGN KEY constraint 'FK_Tbl_GRN_Tbl_Material_MaterialID' on table 'Tbl_GRN' may cause 
+cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+
+
+
+
+
+
+
+

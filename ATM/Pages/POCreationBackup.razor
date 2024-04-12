@@ -1,0 +1,323 @@
+﻿@page "/pobackup"
+
+@using Syncfusion.Blazor.Data
+
+@*@inherits SampleBaseComponent;*@
+
+<div class="col-lg-12 control-section">
+    <div class="control-wrapper">
+        <div class="cascading">
+            <label class="example-label">Country</label>
+            <SfDropDownList TItem="Countries" TValue="string" Placeholder="Select a country"
+                            PopupHeight="auto" DataSource="@Country">
+                <DropDownListEvents TItem="Countries" TValue="string" ValueChange="ChangeCountry"></DropDownListEvents>
+                <DropDownListFieldSettings Text="CountryName" Value="CountryId"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+        <div class="cascading">
+            <label class="example-label">State</label>
+            <SfDropDownList Enabled="@EnableStateDropDown" TValue="string" TItem="State" @bind-Value="@StateValue" Placeholder="Select a state" Query="@StateQuery" PopupHeight="auto" DataSource="@States">
+                <DropDownListEvents TItem="State" TValue="string" ValueChange="ChangeState"></DropDownListEvents>
+                <DropDownListFieldSettings Text="StateName" Value="StateId"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+        <div class="cascading">
+            <label class="example-label">City</label>
+            <SfDropDownList Enabled="@EnableCitytDropDown" TValue="string" TItem="city" @bind-Value="@CityValue" Placeholder="Select a city" Query="@CityQuery" PopupHeight="auto" DataSource="@cites">
+                <DropDownListFieldSettings Text="CityName" Value="CityId"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+    </div>
+</div>
+
+@code {
+    public bool EnableStateDropDown = false;
+    public bool EnableCitytDropDown = false;
+    public string StateValue { get; set; } = null;
+    public Query StateQuery { get; set; } = null;
+    public string CityValue { get; set; } = null;
+    public Query CityQuery { get; set; } = null;
+
+    public void ChangeCountry(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, Countries> args)
+    {
+        this.EnableStateDropDown = !string.IsNullOrEmpty(args.Value);
+        this.EnableCitytDropDown = false;
+        this.StateQuery = new Query().Where(new WhereFilter() { Field = "CountryId", Operator = "equal", value = args.Value, IgnoreCase = false, IgnoreAccent = false });
+        this.StateValue = null;
+        this.CityValue = null;
+    }
+    public void ChangeState(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, State> args)
+    {
+        this.EnableCitytDropDown = !string.IsNullOrEmpty(args.Value);
+        this.CityQuery = new Query().Where(new WhereFilter() { Field = "StateId", Operator = "equal", value = args.Value, IgnoreCase = false, IgnoreAccent = false });
+        this.CityValue = null;
+    }
+    public class State
+    {
+        public string StateName { get; set; }
+        public string CountryId { get; set; }
+        public string StateId { get; set; }
+    }
+    public class Countries
+    {
+        public string CountryName { get; set; }
+        public string CountryId { get; set; }
+    }
+    public class city
+    {
+        public string CityName { get; set; }
+        public string StateId { get; set; }
+        public string CityId { get; set; }
+    }
+    public List<Countries> Country = new List<Countries>() {
+        new Countries(){ CountryName= "Australia", CountryId= "2" },
+        new Countries(){ CountryName= "United States", CountryId= "1" }
+    };
+    public List<State> States = new List<State>() {
+        new State() { StateName= "New York", CountryId= "1", StateId= "101" },
+        new State() { StateName= "Queensland", CountryId= "2", StateId= "104" },
+        new State() { StateName= "Tasmania ", CountryId= "2", StateId= "105" },
+        new State() { StateName= "Victoria", CountryId= "2", StateId= "106" },
+        new State() { StateName= "Virginia", CountryId= "1", StateId= "102" },
+        new State() { StateName= "Washington", CountryId= "1", StateId= "103" }
+    };
+    public List<city> cites = new List<city>()
+    {
+         new city() { CityName = "Aberdeen", StateId= "103", CityId= "207" },
+         new city() { CityName = "Albany", StateId= "101", CityId= "201" },
+         new city() { CityName = "Brisbane ", StateId="104", CityId= "211" },
+         new city() { CityName = "Colville ", StateId= "103", CityId= "208" },
+         new city() { CityName ="Emporia", StateId= "102", CityId= "206" },
+         new city() { CityName = "Hampton ", StateId= "102", CityId= "205" },
+         new city() { CityName ="Hobart", StateId= "105", CityId= "213" },
+         new city() { CityName ="Lockport", StateId= "101", CityId= "203" },
+         new city() { CityName =  "Pasco", StateId= "103", CityId= "209" },
+         new city() { CityName= "Alexandria", StateId= "102", CityId= "204" },
+         new city() { CityName= "Beacon ", StateId= "101", CityId= "202" },
+         new city() { CityName= "Cairns", StateId= "104", CityId= "212" },
+         new city() { CityName= "Devonport", StateId= "105", CityId= "215" },
+         new city() { CityName= "Geelong", StateId= "106", CityId= "218" },
+         new city() { CityName= "Healesville ", StateId="106", CityId= "217" },
+         new city() { CityName= "Launceston ", StateId= "105", CityId= "214" },
+         new city() { CityName= "Melbourne", StateId= "106", CityId="216" },
+         new city() { CityName= "Townsville", StateId= "104", CityId= "210" }
+    };
+}
+
+<style>
+    .control-wrapper {
+        max-width: 250px;
+        margin: 0 auto;
+        padding: 10px 0px 0px;
+    }
+
+    .example-label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+    .control-wrapper .cascading {
+        padding: 30px 0px 0px;
+    }
+</style>
+
+             @*<div class="row" style="padding:4%">
+        <div class="col-4">
+            Select Material Type:
+            <SfDropDownList ID="materialtype_name" TValue="int" TItem="DetailedPurchaseOrder" @bind-Value="materialtypeid"
+                            Placeholder="--Select a Material Type--" DataSource="@DetailedPurchaseOrders">
+                <DropDownListFieldSettings Value="MaterialTypeID" Text="MaterialTypeID"></DropDownListFieldSettings>
+                <DropDownListEvents TValue="int" TItem="DetailedPurchaseOrder" ValueChange="TypeIDChange"></DropDownListEvents>
+            </SfDropDownList>
+        </div>
+
+        <div class="col-4">
+            Select Material:
+            <SfDropDownList ID="material_name" TValue="int" TItem="DetailedPurchaseOrder"
+                            Placeholder="--Select Material Name--" DataSource="@MaterialNames">
+                <DropDownListFieldSettings Text="MaterialName" Value="MaterialID"></DropDownListFieldSettings>
+                <DropDownListEvents TValue="int" TItem="DetailedPurchaseOrder" ValueChange="GetMaterialDetails"></DropDownListEvents>
+            </SfDropDownList>
+        </div>
+
+        <div class="col-4">
+            Ordered Quantity:
+            <SfNumericTextBox ShowSpinButton="false" Readonly=true @bind-Value="@orderedqty"></SfNumericTextBox>
+        </div>
+
+    </div>
+    <div class="row" style="padding:4%">
+        <div class="col-4">
+            Remaining Quantity:
+            <SfNumericTextBox ShowSpinButton=false Readonly=true @bind-Value="@remainingqty"></SfNumericTextBox>
+        </div>
+        <div class="col-4">
+            Recieved Quantity:
+            <SfNumericTextBox ShowSpinButton="false" @bind-Value="@grn.GRNQuantity"></SfNumericTextBox>
+        </div>
+    </div>*@
+
+@*
+<EditForm Model="@grn">
+
+    <div class="row" style="padding:3%">
+
+        <div class="col-4">
+            GRN Number:
+            <SfTextBox ID="po" Value="@grnno" Readonly="true"></SfTextBox>
+        </div>
+        <div class="col-4">
+            Select Date:
+            <SfDatePicker TValue="DateTime" Format="dd-MM-yyyy" Value="@DateValue">
+                <DatePickerEvents TValue="DateTime" ValueChange="@onChange"></DatePickerEvents>
+            </SfDatePicker>
+        </div>
+        <div class="col-4">
+            Select Supplier Name:
+            <SfDropDownList ID="suppliername" @bind-Value="@SupplierID" TValue="int"
+                            Placeholder="--Select Supplier Name--" TItem="Supplier" DataSource="@Suppliers">
+                <DropDownListFieldSettings Value="SupplierID" Text="SupplierName"></DropDownListFieldSettings>
+                <DropDownListEvents TValue="int" TItem="Supplier" ValueChange="OnSupplierChange"></DropDownListEvents>
+            </SfDropDownList>
+            @SupplierID
+        </div>
+
+    </div>
+    <div class="row" style="padding-right:6%; padding-left:6%; padding-bottom:3%">
+        <div class="col-5">
+            Select Financial Year:
+            <SfTextBox ID="f_year" Value="@fyear" Readonly="true"></SfTextBox>
+            <SfDropDownList ID="po_number" TValue="string" TItem="PurchaseOrder"
+            Placeholder="--Select Fyear--" DataSource="@PurchaseOrders" Value="@fyear">
+            <DropDownListFieldSettings Value="Fyear" Text="Fyear"></DropDownListFieldSettings>
+            <DropDownListEvents TItem="PurchaseOrder" TValue="string" ValueChange="OnFyearChange"></DropDownListEvents>
+            </SfDropDownList>
+        </div>
+        <div class="col-5">
+            Select PO Number:
+            <SfDropDownList ID="po_number" TValue="int" TItem="PurchaseOrder"
+                            Placeholder="--Select PO Number--" DataSource="@POCustom">
+                <DropDownListFieldSettings Value="PONumber" Text="PONumber"></DropDownListFieldSettings>
+                <DropDownListEvents TItem="PurchaseOrder" TValue="int" ValueChange="OnPOChange"></DropDownListEvents>
+            </SfDropDownList>
+        </div>
+    </div>
+
+    <SfGrid DataSource="@DetailedPurchaseOrders" Width="1420" ID="grngrid" Toolbar="@(new List<string>() { "Edit", "Delete", "Cancel", "Update", "Search" })"
+            Height="315">
+        <GridEvents OnActionBegin="ActionBeginHandler" TValue="GRN"></GridEvents>
+        <GridColumns>
+            <GridColumn Field="@nameof(DetailedPurchaseOrder.DetailedPOID)" HeaderText="PO ID"></GridColumn>
+            <GridColumn Field="@nameof(DetailedPurchaseOrder.PONumber)" HeaderText="PO Number"></GridColumn>
+            <GridColumn Field="@nameof(DetailedPurchaseOrder.MaterialName)" HeaderText="Material Name"></GridColumn>
+            <GridColumn Field="@nameof(DetailedPurchaseOrder.MaterialName)" HeaderText="Material Name"></GridColumn>
+            <GridForeignColumn Field=@nameof(DetailedPurchaseOrder.MaterialTypeID) HeaderText="Material Type Name" ForeignKeyValue="MaterialTypeName" ForeignDataSource="@MaterialTypes"></GridForeignColumn>
+            <GridColumn HeaderText="GRN Quantity"></GridColumn>
+        </GridColumns>
+    </SfGrid>
+
+
+</EditForm>
+@code {
+
+    public List<Supplier> Suppliers { get; set; } = null!;
+    public List<PurchaseOrder> PurchaseOrders { get; set; } = null!;
+    public List<PurchaseOrder> POCustom { get; set; } = null!;
+    public List<DetailedPurchaseOrder> DetailedPurchaseOrders { get; set; } = null!;
+    public List<DetailedPurchaseOrder> MaterialNames { get; set; } = null!;
+    public List<MaterialType> MaterialTypes { get; set; } = null!;
+    public List<DetailedPurchaseOrder> Fyears { get; set; } = null!;
+
+    public int SupplierID { get; set; }
+    public int ponumber { get; set; }
+    public int materialtypeid { get; set; }
+    public int materialid { get; set; }
+
+    public decimal remainingqty { get; set; }
+    public decimal orderedqty { get; set; }
+
+    public string grnno { get; set; } = null!;
+    public string fyear { get; set; } = null!;
+
+    public DateTime DateValue { get; set; } = DateTime.Now;
+
+    GRN grn = new GRN();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Suppliers = await Task.Run(() => supplierservice.GetSuppliers());
+        PurchaseOrders = await Task.Run(() => purchaseorderservice.GetPurchaseOrders());
+        MaterialTypes = await Task.Run(() => materialtypeservice.GetMaterialTypes());
+        //DetailedPurchaseOrders = await Task.Run(() => purchaseorderservice.GetDetailedPO());
+        //POCustom = await Task.Run(() => purchaseorderservice.GetPurchaseOrders());
+        grnno = grnservice.GetPONumber(DateValue).Result;
+        fyear = purchaseorderservice.GetFYear(DateValue).Result;
+    }
+
+
+
+
+    protected void onChange(Syncfusion.Blazor.Calendars.ChangedEventArgs<DateTime> args)
+    {
+        DateValue = args.Value;
+        grnno = grnservice.GetPONumber(DateValue).Result;
+        fyear = purchaseorderservice.GetFYear(DateValue).Result;
+        StateHasChanged();
+    }
+
+    public async void OnSupplierChange()
+    {
+        POCustom = await Task.Run(() => grnservice.GetPOBySupplier(SupplierID));
+        //fyear = await _context.Tbl_DetailedPurchaseOrder.Select(x => x.Fyear).Distinct().ToListAsync();
+    }
+
+    public async void OnFyearChange()
+    {
+
+    }
+
+    public async void OnPOChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<int, PurchaseOrder> args)
+    {
+        ponumber = args.Value;
+        DetailedPurchaseOrders = await Task.Run(() => grnservice.GetDetailsByID(ponumber));
+
+    }
+
+    public async Task TypeIDChange()
+    {
+        MaterialNames = await Task.Run(() => grnservice.GetMaterialByTypeID(materialtypeid, ponumber));
+    }
+
+
+    public void GetMaterialDetails(Syncfusion.Blazor.DropDowns.ChangeEventArgs<int, DetailedPurchaseOrder> args)
+    {
+        materialid = args.Value;
+        DetailedPurchaseOrder detailedmaterial = _context.Tbl_DetailedPurchaseOrder.Find(materialid);
+
+        orderedqty = detailedmaterial.Quantity;
+        remainingqty = orderedqty - grn.GRNQuantity;
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<GRN> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await grnservice.AddGRN(Args.Data);
+                DetailedPurchaseOrders = (await purchaseorderservice.GetDetailedPO()).ToList();
+            }
+            else
+            {
+                await grnservice.UpdateGRN(Args.Data);
+                DetailedPurchaseOrders = (await purchaseorderservice.GetDetailedPO()).ToList();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await grnservice.DeleteGRN(Args.Data.GRNID);
+        }
+    }
+
+
+}*@

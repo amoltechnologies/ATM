@@ -1,0 +1,671 @@
+﻿@page "/PurchaseOrderCreation"
+
+@using ATM.Models;
+@using ATM.Data;
+@using Microsoft.EntityFrameworkCore;
+
+@inject ATM.Data.ApplicationDbContext _context
+@inject PurchaseOrderService purchaseorderservice
+@inject MaterialTypeService materialtypeservice
+@inject MaterialCategoryService materialcategoryservice
+@inject MaterialSubCategoryService materialsubcategoryservice
+@inject SupplierService supplierservice
+@inject MaterialService materialservice
+@inject UnitService unitservice
+
+
+
+<h2>Let's create Purchase Order</h2>
+<br />
+<div class="row" style="padding:3%">
+
+    <div class="col-4">
+        Purchase Order No:
+        <SfTextBox ID="po" Value="@po" Readonly="true"></SfTextBox>
+    </div>
+    <div class="col-4">
+        Select Supplier Name:
+        <SfDropDownList ID="suppliername" @bind-Value="@SupplierID" TValue="int" TItem="Supplier" DataSource="@Suppliers">
+            <DropDownListFieldSettings Value="SupplierID" Text="SupplierName"></DropDownListFieldSettings>
+        </SfDropDownList>
+    </div>
+    <div class="col-4">
+        Date of Purchase Order
+        <SfDatePicker TValue="DateTime" Format="dd-MM-yyyy" Value="@DateValue">
+            <DatePickerEvents TValue="DateTime" ValueChange="@onChange"></DatePickerEvents>
+        </SfDatePicker>
+    </div>
+
+</div>
+
+<br />
+<br />
+
+<SfGrid DataSource="@TemperoryPurchaseOrders" ID="TempGrid" Toolbar="@(new List<string>() { "Edit", "Delete", "Cancel", "Update", "Search" })">
+    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+    </GridEditSettings>
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridEvents OnActionBegin="ActionBeginHandler" TValue="TemperoryPurchaseOrder"></GridEvents>
+    <GridColumns>
+        <GridColumn Field="@nameof(TemperoryPurchaseOrder.MaterialName)" HeaderText="Material Name" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(TemperoryPurchaseOrder.BaseAmount)" HeaderText="Base Amount" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(TemperoryPurchaseOrder.Quantity)" HeaderText="Quantity" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(TemperoryPurchaseOrder.Amount)" AllowEditing=false HeaderText="Amount" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(TemperoryPurchaseOrder.DiscountPercent)" HeaderText="Discount Percent" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(TemperoryPurchaseOrder.IGSTPercent)" AllowEditing=false HeaderText="GST Percent" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(TemperoryPurchaseOrder.IGSTAmount)" AllowEditing=false HeaderText="GST Amount" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(TemperoryPurchaseOrder.SubTotal)" AllowEditing=false HeaderText="Subtotal" AllowFiltering="true"></GridColumn>
+    </GridColumns>
+</SfGrid>
+
+
+<br />
+<br />
+
+<h3>Add Item</h3>
+<EditForm Model="@temppo" OnValidSubmit="@AddItem">
+
+    <div style="padding:5%" class="add-item">
+
+        <div class="row">
+
+            <div class="col-4">
+                Material Type:
+                <SfDropDownList ID="materialtype_name" TValue="string" TItem="MaterialType" @bind-Value="materialtypeid"
+                                Placeholder="--Select a Material Type--" DataSource="@MaterialTypes">
+                    <DropDownListFieldSettings Value="MaterialTypeID" Text="MaterialTypeName"></DropDownListFieldSettings>
+                    <DropDownListEvents TValue="string" TItem="MaterialType" ValueChange="TypeIDChange"></DropDownListEvents>
+                </SfDropDownList>
+            </div>
+
+            <div class="col-4">
+                Material Name:
+                <SfDropDownList ID="material_name" TValue="string" TItem="Material"
+                                Placeholder="--Select Material Name--" DataSource="@MaterialCustom">
+                    <DropDownListFieldSettings Value="MaterialID" Text="MaterialName"></DropDownListFieldSettings>
+                    <DropDownListEvents TItem="Material" TValue="string" ValueChange="GetMaterialsByID"></DropDownListEvents>
+                </SfDropDownList>
+            </div>
+
+            <div class="col-4">
+                Material Description:
+                <SfTextBox Readonly=true @bind-Value="@desc"></SfTextBox>
+            </div>
+
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row">
+
+            <div class="col-4">
+                Enter Quantity:
+                <SfNumericTextBox ShowSpinButton="false" @bind-Value="@temppo.Quantity" OnChange="CalculateAmount"></SfNumericTextBox>
+            </div>
+
+            <div class="col-4">
+                Enter Base Amount:
+                <SfNumericTextBox ShowSpinButton=false @bind-Value="@temppo.BaseAmount" OnChange="CalculateAmount"></SfNumericTextBox>
+            </div>
+
+            <div class="col-4">
+                Enter Discount:
+                <SfNumericTextBox ShowSpinButton=false @bind-Value="@temppo.DiscountPercent" Max="100" Min="0"
+                                  OnChange="CalculateAmount"></SfNumericTextBox>
+            </div>
+
+        </div>
+
+        <br /><br />
+
+        <div class="row">
+
+            <div class="col-4">
+                HSN/SAC Code:
+                <SfTextBox Readonly=true @bind-Value="@HSNCode"></SfTextBox>
+            </div>
+
+            <div class="col-4">
+                GST Percent:
+                <SfNumericTextBox ShowSpinButton=false Readonly=true @bind-Value="@GSTPercent"></SfNumericTextBox>
+            </div>
+
+        </div>
+
+        <br /><br />
+
+        <div class="row">
+
+            <div class="col-4">
+                GST Amount:
+                <SfNumericTextBox ShowSpinButton=false Readonly=true @bind-Value="@GSTAmount"></SfNumericTextBox>
+            </div>
+
+            <div class="col-4">
+                Subtotal:
+                <SfNumericTextBox ShowSpinButton=false Readonly=true @bind-Value="@SubTotal"></SfNumericTextBox>
+            </div>
+
+        </div>
+
+        <br /><br />
+
+        <div class="row">
+            <div class="col-12" style="text-align:center">
+                <button type="submit" class="btn btn-primary">Add Item</button>
+            </div>
+        </div>
+
+    </div>
+</EditForm>
+
+<h2>Add Miscellaneous Info</h2>
+
+<div class="misc" style="padding:3%">
+
+    <div class="row">
+
+        <div class="col-4">
+            Kind Attention:
+            <SfTextBox ID="kindattn" Placeholder="Enter Kind Attention" @bind-Value="@KindAttn"></SfTextBox>
+        </div>
+
+        <div class="col-4">
+            Delivery
+            <SfTextBox ID="delivery" Placeholder="Enter Delivery" @bind-Value="@Delivery"></SfTextBox>
+        </div>
+
+        <div class="col-4">
+            Payment:
+            <SfTextBox ID="payment" Placeholder="Enter Payment" @bind-Value="@Payment"></SfTextBox>
+        </div>
+
+    </div>
+    <br /><br />
+    <div class="row">
+
+        <div class="col-4">
+            P & F:
+            <SfTextBox ID="PandF" Placeholder="Enter P & F" @bind-Value="@PandF"></SfTextBox>
+        </div>
+
+        <div class="col-4">
+            Transportation Amount
+            <SfTextBox ID="transport-amt" Placeholder="Enter Transportation Amount" @bind-Value="@TransportationAmt"></SfTextBox>
+        </div>
+
+        <div class="col-4">
+            Insurance:
+            <SfTextBox ID="insurance" Placeholder="Enter Insurance" @bind-Value="Insurance"></SfTextBox>
+        </div>
+
+    </div>
+    <br /><br />
+    <div class="row">
+
+        <div class="col-4">
+            Dispatched Through:
+            <SfTextBox ID="dispatch" Placeholder="Enter Special Remarks" @bind-Value="@DispatchedThrough"></SfTextBox>
+        </div>
+
+        <div class="col-4">
+            Quotation No.
+            <SfTextBox ID="quotationno" Placeholder="Enter Quotation No" @bind-Value="@QuotationNo"></SfTextBox>
+        </div>
+
+        <div class="col-4">
+            Date of Quotation
+            <SfDatePicker TValue="DateTime" Value="@DateofQuotation">
+                <DatePickerEvents TValue="DateTime" ValueChange="@onQuotChange"></DatePickerEvents>
+            </SfDatePicker>
+        </div>
+
+    </div>
+    <br /><br />
+
+</div>
+<div class="row">
+    <div class="col-12" style="text-align:center">
+        <button type="button" class="btn btn-primary" @onclick="SaveItem">Save Purchase Order</button>
+    </div>
+</div>
+
+<div class="bottom" style="padding:2%; align-content:center">
+    <div class="row">
+        <div class="col-4">
+            <h4>SGST Amount: <br /> @SGST</h4>
+        </div>
+        <div class="col-4">
+            <h4>CGST Amount: <br /> @CGST</h4>
+        </div>
+        <div class="col-4">
+            <h4>IGST Amount: <br /> @GSTAmount</h4>
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-4">
+            <h4>Base Amount: <br /> @BaseAmount</h4>
+        </div>
+        <div class="col-4">
+            <h4>Total GST Amount: <br /> @purchaseorder.TotalGSTAmount</h4>
+        </div>
+        <div class="col-4">
+            <h4>Total Amount: <br /> @purchaseorder.TotalAmount</h4>
+        </div>
+    </div>
+    <div class="row">
+    </div>
+</div>
+
+
+@code {
+
+
+    public decimal SGST { get; set; }
+    public decimal CGST { get; set; }
+    public decimal IGST { get; set; }
+    public decimal GSTPercent { get; set; }
+    public decimal BaseAmount { get; set; }  // Single Item Amount
+    public decimal SubTotal { get; set; }    // Amount with Discount and GST
+    public decimal Quantity { get; set; }    // Amount with Discount and GST
+    public decimal GSTAmount { get; set; }    // GST Amount
+    public decimal Amount { get; set; }    // Quantity * BaseAmount
+    public decimal AmountAfterDiscount { get; set; }
+    public int materialID { get; set; }
+    public int UserID { get; set; } = 1;
+    public int SupplierID { get; set; } = 1;
+    public int PONumber { get; set; } 
+    //public int materialtypeid { get; set; }
+    //public int materialid { get; set; }
+
+    public decimal TotalGSTPercent { get; set; }
+    public decimal TotalGSTAmount { get; set; }
+    public decimal TotalDiscountPercent { get; set; }
+    public decimal TotalDiscountAmount { get; set; }
+    public decimal TotalAmount { get; set; }
+
+    public string GSTPer { get; set; } = null!;
+    public string Fyear { get; set; } = null!;
+    public string desc { get; set; } = null!;
+    public string materialname { get; set; } = null!;
+    string HSNCode { get; set; } = null!;
+    public string po = null!;
+    public string materialtypeid { get; set; } = null!;
+    public string materialtypename { get; set; } = null!;
+    public string materialid { get; set; } = null!;
+    public string UnitName { get; set; } = null!;
+    public string KindAttn { get; set; } = "";
+    public string Delivery { get; set; } = "";
+    public string Payment { get; set; } = "";
+    public string PandF { get; set; } = "";
+    public string TransportationAmt { get; set; } = "";
+    public string Insurance { get; set; } = "";
+    public string DispatchedThrough { get; set; } = "";
+    public string QuotationNo { get; set; } = "";
+
+    public List<PurchaseOrder> PurchaseOrders { get; set; } = null!;
+    public List<TemperoryPurchaseOrder> TemperoryPurchaseOrders { get; set; } = null!;
+    public List<DetailedPurchaseOrder> DetailedPurchaseOrders { get; set; } = null!;
+    public List<MaterialType> MaterialTypes { get; set; } = null!;
+    public List<Supplier> Suppliers { get; set; } = null!;
+    public List<Material> Materials { get; set; } = null!;
+    public List<Material> MaterialCustom { get; set; } = null!;
+    public List<Material> MaterialCustomd { get; set; } = null!;
+    public List<MaterialCategory> MaterialCategories { get; set; } = null!;
+    public List<MaterialSubCategory> MaterialSubCategories { get; set; } = null!;
+    public List<Material> MaterialDetails { get; set; } = null!;
+    public List<Unit> Units { get; set; } = null!;
+    public List<IQueryable> MaterialTypeCustom { get; set; } = null!;
+
+    public DateTime DateValue { get; set; } = DateTime.Now;
+    public DateTime DateofQuotation { get; set; } = DateTime.Now;
+
+    protected override async Task OnInitializedAsync()
+    {
+        PurchaseOrders = await Task.Run(() => purchaseorderservice.GetPurchaseOrders());
+        TemperoryPurchaseOrders = await Task.Run(() => purchaseorderservice.GetTemperoryPO());
+        MaterialTypes = await Task.Run(() => materialtypeservice.GetMaterialTypes());
+        Suppliers = await Task.Run(() => supplierservice.GetSuppliers());
+        Materials = await Task.Run(() => materialservice.GetMaterials());
+        Units = await Task.Run(() => unitservice.GetUnits());
+        MaterialCategories = await Task.Run(() => materialcategoryservice.GetMaterialCategories());
+        MaterialSubCategories = await Task.Run(() => materialsubcategoryservice.GetMaterialSubCategories());
+        //MaterialDetails = GetMaterialDetails().ToList();
+        //MaterialSubCategories = GetMaterialDetails();
+        MaterialDetails = await Task.Run(() => materialservice.GetMaterials());
+        //MaterialTypeCustom = await Task.Run(() => materialservice.GetCustomTypeID());
+        po = await Task.Run(() => purchaseorderservice.GetPONumber(DateValue));
+        Fyear = await Task.Run(() => purchaseorderservice.GetFYear(DateValue));
+        //MaterialTypeCustom = Materials.DistinctBy(type => type.MaterialTypeID).ToList();
+    }
+
+
+    protected async void onChange(Syncfusion.Blazor.Calendars.ChangedEventArgs<DateTime> args)
+    {
+        DateValue = args.Value;
+        po = purchaseorderservice.GetPONumber(DateValue).Result;
+        StateHasChanged();
+    }
+
+    protected void onQuotChange(Syncfusion.Blazor.Calendars.ChangedEventArgs<DateTime> args)
+    {
+        DateofQuotation = args.Value;
+        StateHasChanged();
+    }
+
+    public void CalculateAmount()
+    {
+        Amount = temppo.BaseAmount * temppo.Quantity;
+        AmountAfterDiscount = Amount - Amount * temppo.DiscountPercent / 100;
+        GSTAmount = AmountAfterDiscount * GSTPercent / 100;
+        SubTotal = AmountAfterDiscount + GSTAmount;
+    }
+
+    PurchaseOrder purchaseorder = new PurchaseOrder();
+    TemperoryPurchaseOrder temppo = new TemperoryPurchaseOrder();
+    DetailedPurchaseOrder detailedpurchaseorder = new DetailedPurchaseOrder();
+    Material material = new Material();
+
+    public async Task TypeIDChange()
+    {
+
+        //var result = _context.Tbl_Material.Join(_context.Tbl_MaterialType, material => material.MaterialTypeID,
+        //                                                      type => type.MaterialTypeID,
+        //                                                      (material, type) => new
+        //                                                      {
+        //                                                          MaterialTypeID = type.MaterialTypeID,
+        //                                                          MaterialTypeName = type.MaterialTypeName
+        //                                                      }).ToListAsync();
+
+        //Material mat = new Material();
+
+        //MaterialTypeCustom = result;
+
+        MaterialCustom = await Task.Run(() => materialservice.GetMaterialByTypeID(materialtypeid));
+    }
+
+    public void GetMaterialsByID(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, Material> args)
+    {
+        materialid = args.Value;
+        var id = Convert.ToInt32(materialid);
+        Material mat = _context.Tbl_Material.Find(id);
+
+        desc = mat.MaterialDescription;
+        HSNCode = mat.MaterialHSNCode;
+        GSTPercent = mat.MaterialGSTPercent;
+        UnitName = mat.UnitName;
+        materialname = mat.MaterialName;
+    }
+
+
+
+    public async void AddItem()
+    {
+        temppo.Description = desc;
+        temppo.HSNCode = HSNCode;
+        temppo.IGSTPercent = GSTPercent;
+        temppo.IGSTAmount = GSTAmount;
+        temppo.SubTotal = SubTotal;
+        temppo.Amount = Amount;
+        temppo.Fyear = Fyear;
+        temppo.MaterialID = Convert.ToInt32(materialid);
+        temppo.MaterialName = materialname;
+        temppo.UnitName = UnitName;
+        temppo.UserId = UserID;
+        temppo.MaterialTypeID = Convert.ToInt32(materialtypeid);
+
+
+        try
+        {
+
+            await purchaseorderservice.AddTemperoryPO(temppo);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+
+        temppo = new TemperoryPurchaseOrder();
+        TemperoryPurchaseOrders = await Task.Run(() => purchaseorderservice.GetTemperoryPO());
+        base.StateHasChanged();
+
+    }
+
+    public async void SaveItem()
+    {
+
+        ////// Calculate Total Amount
+
+        foreach (var material in TemperoryPurchaseOrders)
+        {
+            TotalGSTPercent = TotalGSTPercent + material.IGSTPercent;
+            TotalGSTAmount = TotalGSTAmount + material.IGSTAmount;
+            TotalDiscountPercent = TotalDiscountPercent + material.DiscountPercent;
+            TotalAmount = TotalAmount + material.Amount;
+        }
+
+        //////
+
+        TotalDiscountAmount = TotalAmount - TotalAmount * TotalDiscountPercent / 100;
+
+        purchaseorder.DateOfQuotation = DateofQuotation;
+        purchaseorder.SupplierID = SupplierID;
+
+        purchaseorder.Fyear = Fyear;
+        purchaseorder.DateOfPO = DateValue;
+        purchaseorder.TotalGSTAmount = TotalGSTAmount;
+        purchaseorder.TotalDiscountAmount = TotalDiscountAmount;
+        purchaseorder.TotalAmount = TotalAmount;
+        purchaseorder.UserId = UserID;
+        purchaseorder.KindAttention = KindAttn;
+        purchaseorder.Delivery = Delivery;
+        purchaseorder.Payment = Payment;
+        purchaseorder.PandF = PandF;
+        purchaseorder.TransportationAmount = TransportationAmt;
+        purchaseorder.Insurance = Insurance;
+        purchaseorder.DispatchedThrough = DispatchedThrough;
+        purchaseorder.QuotationNo = QuotationNo;
+        purchaseorder.CreatedBy = "Apurva";
+        purchaseorder.CreationTime = DateTime.Now;
+
+
+        try
+        {
+            await purchaseorderservice.AddPurchaseOrder(purchaseorder);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+
+
+        foreach (var item in TemperoryPurchaseOrders)
+        {
+
+            detailedpurchaseorder.PONumber = purchaseorder.PONumber;
+            detailedpurchaseorder.SrNo = item.SrNo;
+            detailedpurchaseorder.MaterialID = item.MaterialID;
+            detailedpurchaseorder.MaterialTypeID = item.MaterialTypeID;
+            detailedpurchaseorder.MaterialName = item.MaterialName;
+            detailedpurchaseorder.Fyear = item.Fyear;
+            detailedpurchaseorder.Description = item.Description;
+            detailedpurchaseorder.HSNCode = item.HSNCode;
+            detailedpurchaseorder.BaseAmount = item.BaseAmount;
+            detailedpurchaseorder.Quantity = item.Quantity;
+            detailedpurchaseorder.Amount = item.Amount;
+            detailedpurchaseorder.UnitName = item.UnitName;
+            detailedpurchaseorder.DiscountPercent = item.DiscountPercent;
+            detailedpurchaseorder.SGSTPercent = item.SGSTPercent;
+            detailedpurchaseorder.SGSTAmount = item.SGSTAmount;
+            detailedpurchaseorder.CGSTPercent = item.CGSTPercent;
+            detailedpurchaseorder.CGSTAmount = item.CGSTAmount;
+            detailedpurchaseorder.IGSTPercent = item.IGSTPercent;
+            detailedpurchaseorder.IGSTAmount = item.IGSTAmount;
+            detailedpurchaseorder.SubTotal = item.SubTotal;
+            detailedpurchaseorder.UserId = item.UserId;
+
+
+            try
+            {
+                await purchaseorderservice.AddDetailedPO(detailedpurchaseorder);
+
+            }
+            catch
+            {
+                base.StateHasChanged();
+            }
+
+
+            detailedpurchaseorder = new DetailedPurchaseOrder();
+
+        }
+
+        purchaseorder = new PurchaseOrder();
+        base.StateHasChanged();
+
+        detailedpurchaseorder = new DetailedPurchaseOrder();
+        base.StateHasChanged();
+
+
+        _context.Database.ExecuteSqlRaw("Truncate table Tbl_TemperoryPurchaseOrder");
+        await _context.SaveChangesAsync();
+        base.StateHasChanged();
+        TemperoryPurchaseOrders = await Task.Run(() => purchaseorderservice.GetTemperoryPO());
+
+    }
+
+    /////////////////////
+    //                 //
+    // defined classes //
+    //                 //
+    /////////////////////
+
+    public class GST
+    {
+        public int ID { get; set; }
+        public string GSTPercent { get; set; } = null!;
+    }
+    GST gstobj = new GST();
+
+    private List<GST> gst = new List<GST>() {
+        new GST(){ ID= 1, GSTPercent= "0" },
+        new GST(){ ID= 2, GSTPercent= "5" },
+        new GST(){ ID= 3, GSTPercent= "12" },
+        new GST(){ ID= 4, GSTPercent= "18" },
+        new GST(){ ID= 5, GSTPercent= "28" },
+     };
+
+
+    public async void ActionBeginHandler(ActionEventArgs<TemperoryPurchaseOrder> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await purchaseorderservice.AddTemperoryPO(Args.Data);
+                TemperoryPurchaseOrders = (await purchaseorderservice.GetTemperoryPO()).ToList();
+                base.StateHasChanged();
+            }
+            else
+            {
+                await purchaseorderservice.UpdateTemperoryPO(Args.Data);
+                TemperoryPurchaseOrders = (await purchaseorderservice.GetTemperoryPO()).ToList();
+                base.StateHasChanged();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await purchaseorderservice.DeleteTemperoryPO(Args.Data.SrNo);
+            base.StateHasChanged();
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    //public IEnumerable<Material> MaterialEnum()
+    //{
+
+    //}
+
+
+    //public class MaterialDetails
+    //{
+    //    public string MaterialName { get; set; }
+    //    public string MaterialTypeName { get; set; }
+    //    //public int MaterialID { get; set; }
+    //    //public int MaterialTypeID { get; set; }
+    //    //public int MaterialCategoryID { get; set; }
+    //    //public string MaterialCategoryName { get; set; }
+    //}
+
+    //public List newList = new List<(string materialname, string materialtypename)>
+
+    ///////
+
+
+
+    //public async Task GetMaterialsByID(ChangedEventArgs e)
+    //{
+
+    //    //var id = Convert.ToInt32(materialid);
+    //    var id = Convert.ToInt32(e.Value);
+    //    var id1 = materialid;
+    //    //var id = 2;
+
+    //    Material mat = _context.Tbl_Material.Find(id);
+    //    HSNCode = mat.MaterialHSNCode;
+    //    desc = mat.MaterialDescription;
+    //    GSTPercent = mat.MaterialGSTPercent;
+    //    UnitName = mat.UnitName;
+    //    materialname = mat.MaterialName;
+    //    materialtypename = mat.MaterialType.ToString();
+    //}
+
+
+
+    //public void CalculateGST(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string> args)
+    //{
+    //    if (args.Element.ID == "materialname")
+    //    {
+    //        GSTPer = args.Value;
+    //    }
+    //}
+
+
+    //public void TypeIDChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, MaterialType> args)
+    //{
+    //    materialtypeid = args.Value;
+    //    var id = Convert.ToInt32(materialtypeid);
+
+    //}
+
+
+    //public async Task GetMaterialsByID()
+    //{
+
+    //    var id = Convert.ToInt32(materialid);
+    //    var id1 = materialid;
+    //    //var id = 2;
+
+    //    Material mat = _context.Tbl_Material.Find(2);
+    //    HSNCode = mat.MaterialHSNCode;
+    //    desc = mat.MaterialDescription;
+    //    GSTPercent = mat.MaterialGSTPercent;
+    //    UnitName = mat.UnitName;
+    //    materialname = mat.MaterialName;
+    //    materialtypename = mat.MaterialType.ToString();
+    //    //mat = await _context.Tbl_Material
+    //    //        .ToListAsync();
+
+    //    //MaterialType type = _context.Tbl_MaterialType.Find(materialtypeid);
+    //    //materialname = type.MaterialTypeName;
+    //}
+
+
+}

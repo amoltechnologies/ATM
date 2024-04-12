@@ -1,0 +1,258 @@
+﻿@page "/"
+
+@using ATM.Models;
+@using ATM.Data;
+@using Microsoft.EntityFrameworkCore;
+
+@inject ATM.Data.ApplicationDbContext _context
+@inject SupplierService supplierservice
+@inject GRNService grnservice
+@inject PurchaseOrderService purchaseorderservice
+@inject MaterialTypeService materialtypeservice
+@inject MaterialService materialservice
+@inject StoreInService storeinservice
+@inject QualityInService qualityinservice
+
+
+
+<h2>Create a GRN</h2>
+<br />
+
+<div class="row" style="padding:3%">
+    <div class="col-4">
+        GRN Number:
+        <SfTextBox ID="po" Value="@grnno" Readonly="true"></SfTextBox>
+    </div>
+    <div class="col-4">
+        Select Date:
+        <SfDatePicker TValue="DateTime" Format="dd-MM-yyyy" Value="@DateValue">
+            <DatePickerEvents TValue="DateTime" ValueChange="@onChange"></DatePickerEvents>
+        </SfDatePicker>
+    </div>
+    <div class="col-4">
+        Select Supplier Name:
+        <SfDropDownList TValue="int" Placeholder="Supplier" TItem="Supplier" @bind-Value="@supplierid" DataSource="@Suppliers">
+            <DropDownListEvents TValue="int" TItem="Supplier" ValueChange="OnSupplierChange"></DropDownListEvents>
+            <DropDownListFieldSettings Text="SupplierName" Value="SupplierID"></DropDownListFieldSettings>
+        </SfDropDownList>
+    </div>
+</div>
+<div class="row" style="padding-right:6%; padding-left:6%; padding-bottom:3%">
+    <div class="col-5">
+        Select Financial Year:
+        <SfTextBox ID="f_year" Value="@fyear" Readonly="true"></SfTextBox>
+    </div>
+    <div class="col-5">
+        Select PO Number:
+        <SfDropDownList TValue="int" TItem="PurchaseOrder" DataSource="@POCustom">
+            <DropDownListFieldSettings Value="PONumber" Text="PONumber"></DropDownListFieldSettings>
+        </SfDropDownList>
+    </div>
+</div>
+
+<SfGrid ShowColumnChooser=true DataSource="@DetailedPO" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Cancel", "Update", "Search" })">
+    <GridEvents OnActionBegin="ActionBeginHandler" TValue="DetailedPurchaseOrder"></GridEvents>
+    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" ShowDeleteConfirmDialog="true"></GridEditSettings>
+    <GridColumns>
+        <GridColumn Field=@nameof(DetailedPurchaseOrder.DetailedPOID) AllowEditing=false HeaderText="PO ID"></GridColumn>
+        <GridColumn Field=@nameof(DetailedPurchaseOrder.PONumber) AllowEditing=false HeaderText="PO Number"></GridColumn>
+        <GridColumn Field=@nameof(DetailedPurchaseOrder.MaterialName) AllowEditing=false HeaderText="Material Name"></GridColumn>
+        <GridColumn Field=@nameof(DetailedPurchaseOrder.BaseAmount) AllowEditing=false HeaderText="Base Amount"></GridColumn>
+        <GridColumn Field=@nameof(DetailedPurchaseOrder.Quantity) AllowEditing=false HeaderText="Quantity"></GridColumn>
+        <GridColumn Field=@nameof(DetailedPurchaseOrder.Amount) AllowEditing=false HeaderText="Amount"></GridColumn>
+        <GridColumn Field=@nameof(GRN.GRNQuantity) AllowEditing=true HeaderText="Total GRN Quantity"></GridColumn>
+    </GridColumns>
+</SfGrid>
+<br />
+<br />
+<div class="row" style="padding-right:6%; padding-left:6%; padding-bottom:3%">
+    <div class="col-5">
+        Select PO ID:
+        <SfDropDownList ID="POID" @bind-Value="@poid" TValue="int" TItem="DetailedPurchaseOrder" DataSource="@DetailedPO">
+            <DropDownListFieldSettings Value="DetailedPOID" Text="DetailedPOID"></DropDownListFieldSettings>
+        </SfDropDownList>
+    </div>
+    <div class="col-5">
+        Select PO Number:
+        <SfNumericTextBox ID="f_year" Value="@ponumber1" Readonly="true" ShowSpinButton=false></SfNumericTextBox>
+    </div>
+</div>
+
+<EditForm Model="grn" OnValidSubmit="HandleValidSubmit">
+    <div class="row">
+        <div class="col-4">
+            @*<SfDropDownList DataSource="DetailedPO" TValue="DetailedPurchaseOrder" TItem="int">
+            <DropDownListFieldSettings Text="POID" Value="POID"></DropDownListFieldSettings>
+            </SfDropDownList>*@
+        </div>
+        <div class="col-4">
+            GRN Quantity:
+            <SfNumericTextBox ID="grn-quantity" @bind-Value="grn.GRNQuantity" ShowSpinButton=false></SfNumericTextBox>
+        </div>
+        <div class="col-4"></div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-12" style="text-align:center">
+            <button type="submit" class="btn btn-primary">Add GRN</button>
+        </div>
+    </div>
+    <br /><br />
+
+</EditForm>
+
+@code {
+
+    public string grnno { get; set; } = null!;
+    public string fyear { get; set; } = null!;
+    //public string supplierid { get; set; } = null!;
+
+    public int supplierid { get; set; }
+    //public int ponumber { get; set; }
+    public int ponumber1 { get; set; } = 50;
+    public int poid { get; set; }
+    public int materialid { get; set; }
+    public int materialtypeid { get; set; }
+
+    public bool quality { get; set; }
+
+    public DateTime DateValue { get; set; } = DateTime.Now;
+
+    public List<Supplier> Suppliers { get; set; } = null!;
+    public List<PurchaseOrder> POCustom { get; set; } = null!;
+    public List<DetailedPurchaseOrder> DetailedPurchaseOrders { get; set; } = null!;
+    public List<DetailedPurchaseOrder> DetailedPO { get; set; } = null!;
+    public List<GRN> GRNs { get; set; } = null!;
+    public List<MaterialType> MaterialTypes { get; set; } = null!;
+    public List<Material> Materials { get; set; } = null!;
+
+    GRN grn = new GRN();
+    Material material = new Material();
+    DetailedPurchaseOrder detailedpo = new DetailedPurchaseOrder();
+    StoreIn storein = new StoreIn();
+    QualityIn qualityin = new QualityIn();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Suppliers = await Task.Run(() => supplierservice.GetSuppliers());
+        //grnno = grnservice.GetPONumber(DateValue).Result;
+        fyear = purchaseorderservice.GetFYear(DateValue).Result;
+        DetailedPurchaseOrders = await Task.Run(() => purchaseorderservice.GetDetailedPO());
+        DetailedPO = await Task.Run(() => purchaseorderservice.GetDetailsByID(50));
+        GRNs = await Task.Run(() => grnservice.GetGRNs());
+        MaterialTypes = await Task.Run(() => materialtypeservice.GetMaterialTypes());
+        //POCustom = await Task.Run(() => purchaseorderservice.GetPOBySupplier(1).Result);
+
+    }
+
+    protected void onChange(Syncfusion.Blazor.Calendars.ChangedEventArgs<DateTime> args)
+    {
+        DateValue = args.Value;
+        //grnno = grnservice.GetPONumber(DateValue).Result;
+        fyear = purchaseorderservice.GetFYear(DateValue).Result;
+        StateHasChanged();
+    }
+
+    protected async void OnSupplierChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<int, Supplier> args)
+    {
+        POCustom = await Task.Run(() => purchaseorderservice.GetPOBySupplier(args.Value));
+    }
+
+
+    private async void HandleValidSubmit()
+    {
+
+        materialid = await Task.Run(() => purchaseorderservice.GetMaterialID(ponumber1, poid));
+        //materialid = 9;
+        materialtypeid = await Task.Run(() => purchaseorderservice.GetMaterialTypeID(ponumber1, poid));
+        //materialtypeid = 1;
+        quality = await Task.Run(() => materialservice.GetQualityParameters(materialid));
+        //quality = false;
+
+        try
+        {
+            grn.Date = DateTime.Now;
+            grn.DetailedPOID = poid;
+            grn.Fyear = fyear;
+            grn.MaterialID = materialid;
+            grn.MaterialTypeID = materialtypeid;
+            grn.SupplierID = 1;
+            grn.UnitName = "NOS";
+            grn.UserID = 1;
+
+
+            await grnservice.AddGRN(grn);
+
+
+            if (quality == true)
+            {
+                qualityin.InQuantity = grn.GRNQuantity;
+                qualityin.MaterialID = grn.MaterialID;
+                qualityin.ReceivedFrom = "GRN";
+                qualityin.ReceivedTransactionID = Convert.ToString(grn.GRNID);
+
+                await qualityinservice.AddQualityIn(qualityin);
+
+            }
+
+            else
+            {
+                storein.InQuantity = grn.GRNQuantity;
+                storein.MaterialID = grn.MaterialID;
+                storein.ReceivedFrom = "GRN";
+                storein.ReceivedTransactionID = Convert.ToString(grn.GRNID);
+
+                await storeinservice.AddStoreIn(storein);
+                
+            }
+
+            await grnservice.AddGRN(grn);
+
+            var id = Convert.ToString(detailedpo.MaterialID);
+            Materials = await Task.Run(() => materialservice.GetMaterialDetails(id));
+
+
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+        grn = new GRN();
+        base.StateHasChanged();
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<DetailedPurchaseOrder> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await purchaseorderservice.AddDetailedPO(Args.Data);
+                DetailedPurchaseOrders = (await purchaseorderservice.GetDetailedPO()).ToList();
+            }
+            else
+            {
+
+                grn.Fyear = fyear;
+                grn.SupplierID = supplierid;
+                grn.DetailedPOID = Args.Data.DetailedPOID;
+                grn.Date = DateTime.Now;
+                grn.MaterialTypeID = Args.Data.MaterialTypeID;
+                grn.MaterialID = Args.Data.MaterialID;
+                grn.UnitName = Args.Data.UnitName;
+                grn.GRNQuantity = Args.Data.GRNQuantity;
+                grn.UserID = 1;
+
+
+                await purchaseorderservice.UpdatePOQuantity(Args.Data);
+                await grnservice.AddGRN(grn);
+                DetailedPurchaseOrders = (await purchaseorderservice.GetDetailedPO()).ToList();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await purchaseorderservice.DeleteDetailedPO(Args.Data.DetailedPOID);
+        }
+    }
+}

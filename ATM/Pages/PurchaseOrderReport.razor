@@ -1,0 +1,49 @@
+﻿@page "/PurchaseOrderReport"
+
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Data
+
+@inject PurchaseOrderService purchaseorderservice
+ 
+<SfGrid @ref="Grid" DataSource="@DetailedPurchaseOrders" Height="100%" AllowSelection="false">
+    <GridEvents OnRecordClick="RecordClickHandler" TValue="DetailedPurchaseOrder"></GridEvents>
+    <GridTemplates>
+        <DetailTemplate>
+            @{
+                var po = (context as DetailedPurchaseOrder);
+                <SfGrid DataSource="@PurchaseOrders" Query="@(new Query().Where("PONumber", "equal", po.PONumber))">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(PurchaseOrder.PONumber) HeaderText="PONumber" Width="110"> </GridColumn>
+                        <GridColumn Field=@nameof(PurchaseOrder.TotalAmount) HeaderText="Total Amount" Width="110"> </GridColumn>
+                        <GridColumn Field=@nameof(PurchaseOrder.Fyear) HeaderText="Fyear" Width="110"></GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            }
+        </DetailTemplate>
+    </GridTemplates>
+    <GridColumns>
+        <GridColumn Field=@nameof(DetailedPurchaseOrder.MaterialName) HeaderText="Material Name" Width="110"> </GridColumn>
+        <GridColumn Field=@nameof(DetailedPurchaseOrder.BaseAmount) HeaderText="Base Amount" Width="110"> </GridColumn>
+        <GridColumn Field=@nameof(DetailedPurchaseOrder.SubTotal) HeaderText="Sub Total" Width="110"> </GridColumn>
+    </GridColumns>
+</SfGrid>
+
+@code {
+
+    SfGrid<DetailedPurchaseOrder> Grid;
+
+    public List<PurchaseOrder> PurchaseOrders { get; set; }
+    public List<DetailedPurchaseOrder> DetailedPurchaseOrders { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        PurchaseOrders = await Task.Run(() => purchaseorderservice.GetPurchaseOrders());
+        DetailedPurchaseOrders = await Task.Run(() => purchaseorderservice.GetDetailedPO());
+    }
+
+    public async Task RecordClickHandler(RecordClickEventArgs<DetailedPurchaseOrder> args)
+    {
+        await Grid.DetailExpandCollapseRow(args.RowData);
+    }
+
+} 

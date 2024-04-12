@@ -1,0 +1,103 @@
+﻿
+using System;
+using FluentValidation;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+
+
+namespace ATM.Models {
+    public class CustomerFluentvalidation : AbstractValidator<Customer>
+    {
+        public CustomerFluentvalidation()
+        {
+            RuleFor(e => e.CustomerName).NotEmpty().WithMessage("Customer Name cannot be empty");
+            RuleFor(e => e.EmailID).NotEmpty().WithMessage("Email ID cannot be empty").EmailAddress();
+            RuleFor(e => e.Address).NotEmpty().WithMessage("Address cannot be empty");
+            RuleFor(e => e.State).NotEmpty().WithMessage("State cannot be empty");
+            RuleFor(e => e.PINCode).NotEmpty().WithMessage("Pincode cannot be empty").MaximumLength(6).MinimumLength(6);
+            RuleFor(e => e.City).NotEmpty().WithMessage("City cannot be empty");
+            RuleFor(e => e.PANNo).NotEmpty().WithMessage("PAN Number cannot be empty").MinimumLength(10).MaximumLength(10);
+            RuleFor(e => e.GSTNo).NotEmpty().WithMessage("GST Number cannot be empty").MinimumLength(15).MaximumLength(15);
+            RuleFor(e => e.OpeningBalance).NotEmpty().WithMessage("Opening Balance cannot be empty");
+            RuleFor(e => e.PrimaryContactPersonName).NotEmpty().WithMessage("Primary Contact Name cannot be empty");
+            RuleFor(e => e.PrimaryContactPersonContact).NotEmpty().WithMessage("Contact Person Contact Number cannot be empty");
+        }
+    }
+    public class FluentValidationCustomer<TValidator> : ComponentBase where TValidator : IValidator, new()
+    {
+        private readonly static char[] separators = new[] { '.', '[' };
+        private TValidator validator;
+
+        [CascadingParameter]
+        private EditContext EditContext { get; set; }
+
+        protected override void OnInitialized()
+        {
+            validator = new TValidator();
+            var messages = new ValidationMessageStore(EditContext);
+
+            /* Re-validate when any field changes or when the entire form   requests validation.*/
+            EditContext.OnFieldChanged += (sender, eventArgs)
+                => ValidateModel((EditContext)sender, messages);
+
+            EditContext.OnValidationRequested += (sender, eventArgs)
+                => ValidateModel((EditContext)sender, messages);
+        }
+
+        private void ValidateModel(EditContext editContext, ValidationMessageStore messages)
+        {
+            var context = new ValidationContext<object>(editContext.Model);
+            var validationResult = validator.Validate(context);
+            messages.Clear();
+            foreach (var error in validationResult.Errors)
+            {
+                var fieldIdentifier = ToFieldIdentifier(editContext, error.PropertyName);
+                messages.Add(fieldIdentifier, error.ErrorMessage);
+            }
+            editContext.NotifyValidationStateChanged();
+        }
+
+        private static FieldIdentifier ToFieldIdentifier(EditContext editContext, string propertyPath)
+        {
+            var obj = editContext.Model;
+
+            while (true)
+            {
+                var nextTokenEnd = propertyPath.IndexOfAny(separators);
+                if (nextTokenEnd < 0)
+                {
+                    return new FieldIdentifier(obj, propertyPath);
+                }
+
+                var nextToken = propertyPath.Substring(0, nextTokenEnd);
+                propertyPath = propertyPath.Substring(nextTokenEnd + 1);
+
+                object newObj;
+                if (nextToken.EndsWith("]"))
+                {
+                    nextToken = nextToken.Substring(0, nextToken.Length - 1);
+                    var prop = obj.GetType().GetProperty("Item");
+                    var indexerType = prop.GetIndexParameters()[0].ParameterType;
+                    var indexerValue = Convert.ChangeType(nextToken, indexerType);
+                    newObj = prop.GetValue(obj, new object[] { indexerValue });
+                }
+                else
+                {
+                    var prop = obj.GetType().GetProperty(nextToken);
+                    if (prop == null)
+                    {
+                        throw new InvalidOperationException($"Could not find   property named {nextToken} in object of type {obj.GetType().FullName}.");
+                    }
+                    newObj = prop.GetValue(obj);
+                }
+
+                if (newObj == null)
+                {
+                    return new FieldIdentifier(obj, nextToken);
+                }
+
+                obj = newObj;
+            }
+        }
+    }
+}

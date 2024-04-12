@@ -1,0 +1,56 @@
+﻿@page "/GRNCreation"
+
+@using ATM.Models;
+@using Microsoft.EntityFrameworkCore;
+@using Syncfusion.Blazor.Data
+
+@inject ATM.Data.ApplicationDbContext _context;
+@inject PurchaseOrderService purchaseorderservice;
+@inject MaterialTypeService materialtypeservice
+@inject MaterialCategoryService materialcategoryservice
+@inject MaterialSubCategoryService materialsubcategoryservice
+@inject SupplierService supplierservice
+@inject MaterialService materialservice
+
+<SfGrid @ref="Grid" DataSource="@Materials" Height="315px" AllowSelection="false">
+    <GridEvents OnRecordClick="RecordClickHandler" TValue="Material"></GridEvents>
+    <GridTemplates>
+        <DetailTemplate>
+            @{
+                var material = (context as Material);
+                <SfGrid DataSource="@MaterialTypes" Query="@(new Query().Where("MaterialTypeID", "equal", material.MaterialTypeID))">
+                    <GridColumns>
+                        <GridColumn Field=@nameof(MaterialType.MaterialTypeID) HeaderText="Material Type ID" Width="110"> </GridColumn>
+                        <GridColumn Field=@nameof(MaterialType.MaterialTypeName) HeaderText="Material Type Name" Width="110"></GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            }
+        </DetailTemplate>
+    </GridTemplates>
+    <GridColumns>
+        <GridColumn Field=@nameof(Material.MaterialName) HeaderText="Material Name" Width="110"> </GridColumn>
+    </GridColumns>
+</SfGrid>
+
+@code {
+
+    SfGrid<Material> Grid;
+
+    public List<Material> Materials { get; set; } = null!;
+    public List<MaterialType> MaterialTypes { get; set; } = null!;
+    public List<DetailedPurchaseOrder> DetailedPurchaseOrders { get; set; } = null!;
+
+    MaterialType materialtype = new MaterialType();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Materials = await Task.Run(() => materialservice.GetMaterials());
+        MaterialTypes = await Task.Run(() => materialtypeservice.GetMaterialTypes());
+    }
+
+    public async Task RecordClickHandler(RecordClickEventArgs<Material> args)
+    {
+        await Grid.DetailExpandCollapseRow(args.RowData);
+    }
+
+} 
