@@ -1,0 +1,112 @@
+﻿@page "/GRNReport"
+
+@using ATM.Models
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+
+@inject GRNService grnservice
+@inject PurchaseOrderService purchaseorderservice
+@inject MaterialTypeService materialtypeservice
+@inject SupplierService supplierservice
+
+@inject ATM.Data.ApplicationDbContext _context
+
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head>
+
+  <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; padding-right:1%; padding-top:1%; font-weight:600; color:white; font-size:17px">GRN Report</h4>
+    </div><br />
+
+<SfGrid DataSource="@DetailedPurchaseOrders">
+ <GridTemplates>
+        <DetailTemplate>
+            @{
+                var detailedpurchaseorder = (context as DetailedPurchaseOrder);
+                      <SfGrid TValue="GRN" Query="@GetGRNQuery(detailedpurchaseorder)" DataSource="@GRNs" Width="auto">
+                              <GridColumns>
+                             <GridForeignColumn Field="@nameof(GRN.SupplierID)" HeaderText="Supplier Name" ForeignDataSource="Suppliers" ForeignKeyValue="SupplierName" Width="auto" ></GridForeignColumn>
+                             <GridColumn Field=@nameof(GRN.Date) Width="auto" HeaderText="Date"></GridColumn>
+                              <GridColumn Field=@nameof(GRN.GRNQuantity) Width="auto" HeaderText="GRN Quantity"></GridColumn>
+                             
+                              </GridColumns>
+                      </SfGrid>
+            }
+        </DetailTemplate>
+    </GridTemplates>
+    <GridColumns>
+         <GridColumn Field=@nameof(DetailedPurchaseOrder.PONumber) HeaderText="PO Number" Width="170"> </GridColumn>
+         <GridColumn Field=@nameof(DetailedPurchaseOrder.Fyear) HeaderText="financial year" Width="170"> </GridColumn>
+         <GridColumn Field=@nameof(DetailedPurchaseOrder.MaterialName) HeaderText="material Name" Width="170"> </GridColumn>
+         <GridForeignColumn Field="@nameof(DetailedPurchaseOrder.MaterialTypeID)" HeaderText="Material Type" ForeignDataSource="MaterialTypes" ForeignKeyValue="MaterialTypeName" Width="170" ></GridForeignColumn>
+         <GridColumn Field=@nameof(DetailedPurchaseOrder.GRNQuantity) HeaderText="GRN Quantity" Width="170"> </GridColumn>
+          <GridColumn Field=@nameof(DetailedPurchaseOrder.UnitName) Width="170" HeaderText="Unit"></GridColumn>
+
+          <GridColumn Field=@nameof(DetailedPurchaseOrder.BaseAmount) HeaderText="Base Amount" Width="170"> </GridColumn>
+          <GridColumn Field=@nameof(DetailedPurchaseOrder.Quantity) HeaderText="Quantity" Width="170"> </GridColumn>
+          <GridColumn Field=@nameof(DetailedPurchaseOrder.DiscountPercent) HeaderText="Discount Percent" Width="170"> </GridColumn>
+          <GridColumn Field=@nameof(DetailedPurchaseOrder.IGSTPercent) HeaderText="GST Percent" Width="170"> </GridColumn>
+          <GridColumn Field=@nameof(DetailedPurchaseOrder.Amount) HeaderText="Amount" Width="170"> </GridColumn>
+            
+           
+           
+         </GridColumns>
+</SfGrid>
+@code{
+    public Query GetGRNQuery(DetailedPurchaseOrder detailedpurchaseorder)
+    {
+        return new Query().Where("DetailedPOID", "equal", detailedpurchaseorder.DetailedPOID);
+    }
+}
+<style>
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+</style>
+@code {
+
+    public List<DetailedPurchaseOrder> DetailedPurchaseOrders { get; set; }
+    public List<GRN> GRNs { get; set; }
+    public List<MaterialType> MaterialTypes { get; set; }
+    public List<Supplier> Suppliers { get; set; }
+    SfGrid<GRN> GRNGrid { get; set; }
+    DetailedPurchaseOrder detailedpurchaseorder = new DetailedPurchaseOrder();
+    GRN grn = new GRN();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        GRNs = await Task.Run(() => grnservice.GetGRNs());
+        DetailedPurchaseOrders = await Task.Run(() => purchaseorderservice.GetDetailedPO());
+        MaterialTypes = await Task.Run(() => materialtypeservice.GetMaterialTypes());
+        Suppliers = await Task.Run(() => supplierservice.GetSuppliers());
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<GRN> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await grnservice.AddGRN(Args.Data);
+                GRNs = (await grnservice.GetGRNs()).ToList();
+            }
+            else
+            {
+                await grnservice.UpdateGRN(Args.Data);
+                GRNs = (await grnservice.GetGRNs()).ToList();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await grnservice.DeleteGRN(Args.Data.GRNID);
+        }
+    }
+
+}

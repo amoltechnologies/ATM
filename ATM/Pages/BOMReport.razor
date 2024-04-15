@@ -1,0 +1,99 @@
+﻿@page "/BOM_Report"
+
+@using ATM.Models
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+
+@inject BOMService bomservice
+@inject FinishedGoodsService finishedgoodsservice
+@inject ProcessPlanService ProcessPlanService
+@inject MaterialService materialservice
+@inject ATM.Data.ApplicationDbContext _context
+
+
+  <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">   BOM Report</h4>
+    </div><br />
+
+<SfGrid DataSource="@ProcessPlans" AllowFiltering="true" AllowGrouping="true" AllowSorting="true">
+ <GridTemplates>
+        <DetailTemplate>
+            @{
+                var pp = (context as ProcessPlan);
+                      <SfGrid TValue="BOM" Query="@GetBOMQuery(pp)" DataSource="@BOMs"  Width="auto">
+                      <GridColumns>
+
+                               
+                               <GridForeignColumn Field="@nameof(BOM.MaterialID)" HeaderText="Material Name"  Width="auto" ForeignDataSource="Materials" ForeignKeyValue="MaterialName" ></GridForeignColumn>
+
+                              <GridColumn Field=@nameof(BOM.Quantity) HeaderText="Quantity" Width="auto"></GridColumn>
+                             
+                      </GridColumns>
+                      </SfGrid>
+            }
+        </DetailTemplate>
+    </GridTemplates>
+    <GridColumns>
+         <GridForeignColumn Field="@nameof(ProcessPlan.FinishedGoodsID)" HeaderText="Finished Goods Name" ForeignDataSource="FinishedGood" ForeignKeyValue="FG_Name" Width="160" ></GridForeignColumn>
+
+         <GridColumn Field=@nameof(ProcessPlan.ProcessPlanName) HeaderText="Process Plan Name" Width="160"> </GridColumn>
+            <GridColumn Field=@nameof(ProcessPlan.ProcessPlanDescription) HeaderText="Description" Width="160"> </GridColumn>
+            <GridColumn Field=@nameof(ProcessPlan.OutputName) HeaderText="Output Name" Width="160"> </GridColumn>
+            <GridColumn Field=@nameof(ProcessPlan.IsFinalProcess) HeaderText="Is Final Process" Width="160"> </GridColumn>
+            <GridColumn  HeaderText="Output Weight" Width="160"> </GridColumn>
+            <GridColumn Field=@nameof(ProcessPlan.ProcessOutputUnit) HeaderText="Output Unit" Width="160"> </GridColumn>
+            <GridColumn Field=@nameof(ProcessPlan.ProcessScrapQuantity) HeaderText="Scrap Quantity" Width="160"> </GridColumn>
+    </GridColumns>
+</SfGrid>
+<style>
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+</style>
+
+@code {
+
+    public List<BOM> BOMs { get; set; }
+    public List<Material> Materials { get; set; }
+    public List<ProcessPlan> ProcessPlans { get; set; }
+    public List<FinishedGoods> FinishedGood { get; set; }
+    SfGrid<BOM> BOMGrid { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        BOMs = await Task.Run(() => bomservice.GetBOMs());
+        ProcessPlans = await Task.Run(() => ProcessPlanService.GetProcessPlans());
+        FinishedGood = await Task.Run(() => finishedgoodsservice.GetFinishedGoods());
+        Materials = await Task.Run(() => materialservice.GetMaterials());
+
+    }
+
+    public Query GetBOMQuery(ProcessPlan pp)
+    {
+        return new Query().Where("ProcessPlanID", "equal", pp.ProcessPlanID);
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<BOM> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await bomservice.AddBOM(Args.Data);
+                BOMs = (await bomservice.GetBOMs()).ToList();
+            }
+            else
+            {
+                await bomservice.UpdateBOM(Args.Data);
+                BOMs = (await bomservice.GetBOMs()).ToList();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await bomservice.DeleteBOM(Args.Data.BOMID);
+        }
+    }
+
+}

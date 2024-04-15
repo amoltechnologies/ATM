@@ -1,0 +1,83 @@
+﻿@page "/PP_Report"
+
+@using ATM.Models
+@using Syncfusion.Blazor
+@using  Syncfusion.Blazor.Data
+
+@inject ProcessPlanService processplanservice
+@inject FinishedGoodsService finishedgoodsservice
+@inject ATM.Data.ApplicationDbContext _context
+
+
+<div  style="background-color:blueviolet; color:white; font-size:19px; border-radius:5px; 
+padding:5px; border-top:solid; border-left:solid; border-color:darkblue; "> Process Plan Details </div>
+<br />
+
+
+<SfGrid ID="ProcessPlanGrid" Toolbar="@(new List<string>() { "Edit", "Delete", "Cancel", "Update", "Search" })" 
+        Width="auto" Height="100%" DataSource="@ProcessPlans" AllowFiltering="true" AllowGrouping="true" AllowSorting="true">
+    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+    </GridEditSettings>
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridEvents OnActionBegin="ActionBeginHandler" TValue="ProcessPlan">
+    </GridEvents>
+    <GridColumns>
+        <GridForeignColumn Field="@nameof(ProcessPlan.FinishedGoodsID)" HeaderText="Finished Goods Name" ForeignDataSource="FinishedGood" ForeignKeyValue="FG_Name" ></GridForeignColumn>
+
+        <GridColumn Field="@nameof(ProcessPlan.ProcessPlanName)" HeaderText="Process Name" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessPlanDescription)" HeaderText="Description" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.OutputName)" HeaderText="Output Name" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessOutputWeight)" HeaderText="Output Quantity" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessOutputUnit)" HeaderText="Output Unit" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessScrapQuantity)" HeaderText="Scrap Quantity" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessOpeningQuantity)" HeaderText="Opening Quantity" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessBufferLevelQuantity)" HeaderText="Buffer Level Quantity" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessAvailableQuantity)" HeaderText="Available Quantity" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessStoreQuantity)" HeaderText="Store Quantity" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessProductionQuantity)" HeaderText="Production Quantity" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessQualityQuantity)" HeaderText="Quality Quantity" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessDispatchQuantity)" HeaderText="Dispatch Quantity" Width="160" AllowFiltering="true"></GridColumn>
+    </GridColumns>
+</SfGrid>
+<style>
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+</style>
+
+@code {
+
+    public List<ProcessPlan> ProcessPlans { get; set; }
+    public List<FinishedGoods> FinishedGood { get; set; }
+    SfGrid<ProcessPlan> ProcessPlanGrid { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ProcessPlans = await Task.Run(() => processplanservice.GetProcessPlans());
+        FinishedGood = await Task.Run(() => finishedgoodsservice.GetFinishedGoods());
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<ProcessPlan> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await processplanservice.AddProcessPlan(Args.Data);
+                ProcessPlans = (await processplanservice.GetProcessPlans()).ToList();
+            }
+            else
+            {
+                await processplanservice.UpdateProcessPlan(Args.Data);
+                ProcessPlans = (await processplanservice.GetProcessPlans()).ToList();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await processplanservice.DeleteProcessPlan(Args.Data.ProcessPlanID);
+        }
+    }
+
+}

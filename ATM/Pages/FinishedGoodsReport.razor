@@ -1,0 +1,161 @@
+﻿@page "/FG_Report"
+
+@using ATM.Models
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+ 
+@inject FinishedGoodsService finishedgoodsservice
+@inject ProcessPlanService processplanservice 
+@inject QualityParameterService qualityparameterservice
+@inject BOMService bomservice
+@inject MaterialService materialservice
+@inject ATM.Data.ApplicationDbContext _context
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head> 
+
+    <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px"> Finished Goods Report</h4>
+    </div><br />
+<div class="margin">
+  <SfGrid DataSource="@FinishedGood" AllowFiltering="true" AllowGrouping="true" AllowSorting="true">
+      <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+    </GridEditSettings>
+                    <GridTemplates>
+                        <DetailTemplate>
+                            @{
+                                var fg = (context as FinishedGoods);
+                                    <SfGrid TValue="ProcessPlan" Query="@GetProcessPlanQuery(fg)" DataSource="@ProcessPlans" AllowPaging="true" Width="auto">
+                                        <GridPageSettings PageSize="8"></GridPageSettings>
+                                        <GridTemplates>
+                                            <DetailTemplate Context="CustomerContext">
+                                                @{
+                                                var pp = (CustomerContext as ProcessPlan);
+                                                        <SfGrid TValue="QualityParameter" Query="@GetQualityParameterQuery(pp)" DataSource="@QualityParameters">
+                                                            <GridColumns>
+                                                                <GridColumn Field=@nameof(QualityParameter.QualityParameterID) HeaderText="Customer ID" Width="auto"></GridColumn>
+                                                                <GridColumn Field=@nameof(QualityParameter.QualityParameterName) HeaderText="Title" Width="auto"></GridColumn>
+                                                                <GridColumn Field=@nameof(QualityParameter.UnitName) Width="auto"></GridColumn>
+                                                                <GridColumn Field=@nameof(QualityParameter.Value) Width="auto"></GridColumn>
+                                                            </GridColumns>
+                                                        </SfGrid>
+                                                }
+                                            </DetailTemplate>
+                                            <DetailTemplate Context="CustomerContext">
+                                                @{
+                                                var pp = (CustomerContext as ProcessPlan);
+                                                        <SfGrid TValue="BOM" Query="@GetBOMQuery(pp)" DataSource="@BOMs">
+                                                            <GridColumns>
+
+                                                               <GridForeignColumn Field="@nameof(BOM.MaterialID)" Width="auto" HeaderText="Material Name" ForeignDataSource="Materials" ForeignKeyValue="MaterialName" ></GridForeignColumn>
+
+                                                                <GridColumn Field=@nameof(BOM.Quantity) HeaderText="Quanity" Width="auto"></GridColumn>
+                                                               
+                                                            </GridColumns>
+                                                        </SfGrid>
+                                                }
+                                            </DetailTemplate>
+                                        </GridTemplates>
+                                        <GridColumns>
+                                            <GridColumn Field=@nameof(ProcessPlan.OutputName) HeaderText=" Output Name" TextAlign="TextAlign.Right" Width="200"> </GridColumn>
+                                            <GridColumn Field=@nameof(ProcessPlan.ProcessOutputUnit) HeaderText="Output Unit" Width="200"></GridColumn>
+                                            <GridColumn Field=@nameof(ProcessPlan.ProcessPlanDescription) HeaderText=" Description" Width="200"></GridColumn>
+                                        </GridColumns>
+                                    </SfGrid>
+                            }
+                        </DetailTemplate>
+                    </GridTemplates>
+                    <GridColumns>
+                        <GridColumn Field=@nameof(FinishedGoods.FG_Name) HeaderText=" Finished Goods Name" TextAlign="TextAlign.Right" Width="200"> </GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.InternalFG_Name) HeaderText="Internal FG Name" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.HSNCode) HeaderText="HSN Code" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.Description) HeaderText="Description" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.UnitName) HeaderText="Unit" Width="150"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.PerUnitPrice) HeaderText="Per Unit Price" Width="200"></GridColumn>
+                       <GridColumn Field=@nameof(FinishedGoods.FGAvailableQuantity) HeaderText="Available Quantity" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.FGBufferLevelQuantity) HeaderText="BufferLevel Quantity" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.FGDispatchQuantity) HeaderText="Dispatch Quantity" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.FGProductionQuantity) HeaderText="Production Quantity" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.FGQualityQuantity) HeaderText="Quality Quantity" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.FGStoreQuantity) HeaderText="Store Quantity" Width="200"></GridColumn>
+@*                        <GridColumn Field=@nameof(FinishedGoods.MaterialOpeningQuantity) HeaderText="Opening Quantity" Width="110"></GridColumn>
+*@
+                        <GridColumn Field=@nameof(FinishedGoods.InternalDrawing) HeaderText="Internal Drawing" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.CustomerDrawing) HeaderText="Customer Drawing" Width="200"></GridColumn>
+                        <GridColumn Field=@nameof(FinishedGoods.GSTPercent) Width="200"></GridColumn>
+                    </GridColumns>
+</SfGrid>
+</div>
+<style>
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+</style>
+<style>
+    .margin{
+        margin-left:auto;
+        margin-right:auto;
+     /*   margin-bottom:45px;*/
+    }
+   
+</style>
+@code {
+
+    public List<FinishedGoods> FinishedGood { get; set; }
+    public List<ProcessPlan> ProcessPlans { get; set; }
+    public List<QualityParameter> QualityParameters { get; set; }
+    public List<BOM> BOMs { get; set; }
+    public List<Material> Materials { get; set; }
+
+    SfGrid<FinishedGoods> FGGrid { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        FinishedGood = await Task.Run(() => finishedgoodsservice.GetFinishedGoods());
+        ProcessPlans = await Task.Run(() => processplanservice.GetProcessPlans());
+        QualityParameters = await Task.Run(() => qualityparameterservice.GetQualityParameters());
+        BOMs = await Task.Run(() => bomservice.GetBOMs());
+        Materials = await Task.Run(() => materialservice.GetMaterials());
+
+    }
+
+    public Query GetQualityParameterQuery(ProcessPlan pp)
+    {
+        return new Query().Where("ProcessPlanID", "equal", pp.ProcessPlanID);
+    }
+    public Query GetBOMQuery(ProcessPlan pp)
+    {
+        return new Query().Where("ProcessPlanID", "equal", pp.ProcessPlanID);
+    }
+    public Query GetProcessPlanQuery(FinishedGoods fg)
+    {
+        return new Query().Where("FinishedGoodsID", "equal", fg.FinishedGoodsID);
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<FinishedGoods> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await finishedgoodsservice.AddFinishedGoods(Args.Data);
+                FinishedGood = (await finishedgoodsservice.GetFinishedGoods()).ToList();
+            }
+            else
+            {
+                await finishedgoodsservice.UpdateFinishedGoods(Args.Data);
+                FinishedGood = (await finishedgoodsservice.GetFinishedGoods()).ToList();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await finishedgoodsservice.DeleteFinishedGoods(Args.Data.FinishedGoodsID);
+        }
+    }
+
+}

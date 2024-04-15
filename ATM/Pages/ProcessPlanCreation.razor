@@ -1,0 +1,465 @@
+﻿@page "/ProcessPlanCreation"
+@inject ProcessPlanService processplanservice
+@inject FinishedGoodsService finishedgoodsservice
+@inject QualityParameterService qualityparameterservice
+@inject Temp_ProcessPlanService temp_processplanservice
+@inject Temp_QualityParameterService temp_qualityparameterservice
+@inject UnitService unitservice
+@inject ATM.Data.ApplicationDbContext _context
+
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Cards
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using ATM.Models
+@using Microsoft.EntityFrameworkCore;
+
+ <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">  Process Plan Creation</h4>
+ </div><br />
+
+
+<EditForm Model=@temp_processplan OnValidSubmit=@HandleValidSubmit>
+    <DataAnnotationsValidator />
+
+        <div class="row">
+            
+            <div class=" margin col-md-3 col-lg-3;  ">
+                <br />
+                Finished Goods Name
+                <SfDropDownList TValue="int" ID="FG_Name" TItem="FinishedGoods" @bind-Value="finished_goods_name" DataSource="@FinishedGood">
+                    <DropDownListFieldSettings Value="FinishedGoodsID" Text="FG_Name"></DropDownListFieldSettings>
+                    <DropDownListEvents TValue="int" TItem="FinishedGoods" ValueChange="showdata"></DropDownListEvents>
+                </SfDropDownList>
+
+                <br />
+
+            </div>
+            <div class=" margin col-md-3 col-lg-3;  "></div>
+            <div class=" margin col-md-3 col-lg-3;  "></div>
+        </div>
+   
+</EditForm>
+<br /><br />
+ <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px"> Add Process Plans</h4>
+ </div>
+    <div class="row ">
+        <div class="margin col-md-3 form-group">
+            <br  <br />
+            Process Plan Name
+            <SfTextBox ID="ProcessPlanName" @bind-Value="temp_processplan.ProcessName"></SfTextBox>
+         
+        </div>
+
+        <div class="margin col-md-3 form-group">
+            <br /><br />
+            Process Plan Description
+            <SfTextBox ID="ProcessPlanDescription" @bind-Value="temp_processplan.ProcessPlanDescription"></SfTextBox>
+          
+
+        </div>
+
+        <div class="margin col-md-3 form-group">
+            <br /><br />
+            Output Name
+            <SfTextBox ID="OutputName" @bind-Value="temp_processplan.OutputName"></SfTextBox>
+        </div>
+    </div>
+    <div class="row">
+        <div class="margin col-md-3 form-group">
+            <br />
+            Output Quantity
+            <SfNumericTextBox TValue="decimal" @bind-Value="temp_processplan.OutputQuantity"></SfNumericTextBox>
+       
+        </div>
+        <div class="margin col-md-3 form-group">
+            <br />
+            Output Unit
+            @*       <SfTextBox ID=" OutputUnit"  @bind-Value="temp_processplan.OutputUnit"></SfTextBox>*@
+            <SfDropDownList TValue="string" TItem="Unit" @bind-Value="pp_unit" DataSource="@units">
+                <DropDownListFieldSettings Value="UnitName"></DropDownListFieldSettings>
+                <DropDownListEvents TValue="string" TItem="Unit" ValueChange="showdata"></DropDownListEvents>
+            </SfDropDownList>
+             
+        </div>
+        <div class="margin col-md-3 form-group">
+            <br />
+            Scrap Quantity
+            <SfNumericTextBox TValue="decimal" @bind-Value="temp_processplan.ProcessScrapQuantity"></SfNumericTextBox>
+            
+        </div>
+    </div>
+    <div class="row">
+        <div class="margin col-md-3 form-group">
+            <br />
+            Buffer Level Quantity
+            <SfNumericTextBox TValue="decimal" @bind-Value="temp_processplan.ProcessBufferLevelQuantity"></SfNumericTextBox>
+          
+        </div>
+        <div class="margin col-md-3 form-group">
+            <br /><br />
+            Final Process
+            <SfSwitch @bind-Checked="temp_processplan.isFinalProcess" OffLabel="OFF" OnLabel="ON" ValueChange="Change1" TChecked="bool"></SfSwitch>
+    
+        </div>
+        <div class="margin col-md-3 form-group">
+            <br /><br />
+            Quality Parameter Required
+            <SfSwitch @bind-Checked="temp_processplan.isQualityRequired" OffLabel="OFF" OnLabel="ON" ValueChange="Change" TChecked="bool"></SfSwitch>
+         
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 margin" style="text-align:center">
+            <br /><br />
+
+            <button class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; color:aliceblue; margin-bottom:40px;" @onclick="HandleValidSubmit">
+                Add Process Plan
+            </button>
+        </div>
+    @*    <div class="col-md-3 margin">
+            <br />
+            <button class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; color:aliceblue; margin-bottom:40px;">
+                Save Process Plan
+            </button>
+        </div>*@
+      
+
+    </div>
+
+
+<SfDialog class="margin" Target="#target" Width="1450px" AllowDragging="true" IsModal="true" ShowCloseIcon="true" @bind-Visible="@IsVisible">
+    <DialogTemplates>
+        <Header>Quality Parameter</Header>
+        <Content>
+            <SfGrid ID="Temp_QualityParameterGrid" Toolbar="@(new List<string>() {"Add","Update","Delete","Edit" })"
+                    Width="auto" DataSource="@Temp_QualityParameters" AllowFiltering="true" AllowGrouping="true" AllowSorting="true">
+                <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+                </GridEditSettings>
+                <GridPageSettings PageSize="5"></GridPageSettings>
+                <GridEvents TValue="Temp_QualityParameter" OnActionBegin="ActionBeginHandler">
+                </GridEvents>
+                <GridColumns>
+                    <GridColumn Field="@nameof(Temp_QualityParameter.QualityParameterName)" HeaderText="Quality Parameter Name" AllowFiltering="true"></GridColumn>
+
+                    <GridColumn Field="@nameof(Temp_QualityParameter.UnitName)" HeaderText="Unit" AllowFiltering="true"></GridColumn>
+                    <GridColumn Field="@nameof(Temp_QualityParameter.OperatorName)" HeaderText="Operation Name" AllowFiltering="true"></GridColumn>
+                    <GridColumn Field="@nameof(Temp_QualityParameter.Value)" HeaderText="Value " AllowFiltering="true"></GridColumn>
+
+                </GridColumns>
+            </SfGrid>
+            <div class="row">
+                <div class=" margin col-md-3 col-lg-3 col-sm-3;  "></div>
+                <div class="margin col-md-3 col-lg-3 col-sm-3;  " style="text-align:center">
+                    <br /><br />
+                    <button class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; color:aliceblue; margin-bottom:40px;" @onclick="SaveQualityParameter">
+                        Add Quality Parameters
+                    </button>
+                    <br />
+                </div>
+                <div class="margin col-md-3 col-lg-3 col-sm-3; "></div>
+            </div>
+        </Content>
+    </DialogTemplates>
+
+</SfDialog>
+
+<br />
+ <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">  Process Plan Summary</h4>
+ </div>
+ <br />
+    <SfGrid ID="Temp_ProcessPlanGrid" 
+            Width="auto" DataSource="@TempProcessPlan" @ref="Temp_ProcessPlanGrid">
+
+        <GridTemplates>
+            <DetailTemplate>
+                @{
+                    var temp_pp = (context as Temp_ProcessPlan);
+                    <SfGrid Width="auto" TValue="Temp_QualityParameter" Query="@GetTempQualityParameterQuery(temp_pp)" DataSource="@Temp_QualityParameters">
+                        <GridColumns>
+
+                            <GridColumn Field=@nameof(Temp_QualityParameter.QualityParameterName) HeaderText="Quality Parameter Name" Width="auto"></GridColumn>
+                            <GridColumn Field=@nameof(Temp_QualityParameter.UnitName) HeaderText="Unit" Width="auto"></GridColumn>
+                            <GridColumn Field=@nameof(Temp_QualityParameter.OperatorName) Width="auto" HeaderText="Operator Name"></GridColumn>
+                            <GridColumn Field=@nameof(Temp_QualityParameter.Value) Width="auto" HeaderText="Value"></GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                }
+            </DetailTemplate>
+        </GridTemplates>
+
+
+        <GridColumns>
+            <GridColumn Field="@nameof(Temp_ProcessPlan.ProcessPlanID)" Width="170" HeaderText="Sr.No." AllowFiltering="true"></GridColumn>
+
+            <GridColumn Field="@nameof(Temp_ProcessPlan.ProcessName)" Width="170" HeaderText="Process Name" AllowFiltering="true"></GridColumn>
+            <GridColumn Field="@nameof(Temp_ProcessPlan.ProcessPlanDescription)" Width="170"  HeaderText="Description" AllowFiltering="true"></GridColumn>
+            <GridColumn Field="@nameof(Temp_ProcessPlan.OutputName)" Width="170" HeaderText="Output Name" AllowFiltering="true"></GridColumn>
+            <GridColumn Field="@nameof(Temp_ProcessPlan.OutputQuantity)" Width="170"  HeaderText="Output Quantity" AllowFiltering="true"></GridColumn>
+            <GridColumn Field="@nameof(Temp_ProcessPlan.OutputUnit)" Width="170" HeaderText="Output Unit" AllowFiltering="true"></GridColumn>
+            <GridColumn Field="@nameof(Temp_ProcessPlan.ProcessScrapQuantity)" Width="170" HeaderText="Scrap Quantity" AllowFiltering="true"></GridColumn>
+            <GridColumn Field="@nameof(Temp_ProcessPlan.isQualityRequired)" Width="170"  HeaderText="Quality Check Required" AllowFiltering="true"></GridColumn>
+            <GridColumn Field="@nameof(Temp_ProcessPlan.isFinalProcess)" Width="170" HeaderText="Final Process" AllowFiltering="true"></GridColumn>
+            <GridColumn Field="@nameof(Temp_ProcessPlan.isFinalProcess)" Width="170" HeaderText="Final Process" AllowFiltering="true"></GridColumn>
+        </GridColumns>
+    </SfGrid>
+
+    <div class="row">
+        <div class="col-md-12 margin" style="text-align:center">
+            <br /><br />
+
+          <button class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; color:aliceblue; margin-bottom:40px;" @onclick="SaveProcessPlan">
+                Save Process Plan
+            </button>
+        </div>
+  
+    </div>
+
+    <style>
+        .e-headercell {
+            color: blueviolet;
+            font-size: 25px;
+            border-color: aqua
+        }
+
+        .e-gridheader {
+        }
+    </style>
+
+
+@code {
+    public Query GetTempQualityParameterQuery(Temp_ProcessPlan temp_pp)
+    {
+        return new Query().Where("ProcessPlanID", "equal", temp_pp.ProcessPlanID);
+    }
+
+    private bool isChecked = true;
+    private void Change(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool> args)
+    {
+        if (isChecked == false)
+        {
+
+        }
+    }
+    private void Change1(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool> args)
+    {
+
+    }
+}
+@code {
+    public int finished_goods_name { get; set; }
+    public string pp_unit { get; set; }
+
+
+    protected void showdata()
+    {
+
+        temp_processplan.FinishedGoodsID = finished_goods_name;
+        temp_processplan.OutputUnit = pp_unit;
+
+    }
+}
+@code {
+    public List<Temp_ProcessPlan> TempProcessPlan { get; set; }
+    SfGrid<Temp_ProcessPlan> Temp_ProcessPlanGrid { get; set; } = null!;
+    SfGrid<Temp_QualityParameter> Temp_QualityParameterGrid { get; set; }
+
+    public List<ProcessPlan> ProcessPlans { get; set; }
+    public List<Unit> units { get; set; }
+    public List<Temp_ProcessPlan> Temp_ProcessPlans { get; set; }
+    public List<FinishedGoods> FinishedGood { get; set; }
+    public List<QualityParameter> QualityParameters { get; set; }
+    public List<Temp_QualityParameter> Temp_QualityParameters { get; set; }
+
+    public int pp_id;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ProcessPlans = await Task.Run(() => processplanservice.GetProcessPlans());
+        Temp_ProcessPlans = await Task.Run(() => temp_processplanservice.GetTemp_ProcessPlan());
+        QualityParameters = await Task.Run(() => qualityparameterservice.GetQualityParameters());
+        FinishedGood = await Task.Run(() => finishedgoodsservice.GetFinishedGoods());
+        units = await Task.Run(() => unitservice.GetUnits());
+        TempProcessPlan = await Task.Run(() => temp_processplanservice.GetTemp_ProcessPlan());
+
+        Temp_QualityParameters = await Task.Run(() => temp_qualityparameterservice.GetTemp_QualityParameter());
+
+        temp_processplan.FinishedGoodsID = finished_goods_name;
+
+    }
+
+    ProcessPlan processplan = new ProcessPlan();
+    Temp_ProcessPlan temp_processplan = new Temp_ProcessPlan();
+    QualityParameter qualityparameter = new QualityParameter();
+    FinishedGoods finishedgoods = new FinishedGoods();
+    Temp_QualityParameter temp_qualityparameter = new Temp_QualityParameter();
+
+    private bool IsVisible { get; set; } = false;
+    private void OpenDialog()
+    {
+        this.IsVisible = true;
+    }
+
+    private void CloseDialog()
+    {
+        this.IsVisible = false;
+    }
+
+    private async void SaveProcessPlan()
+    {
+        foreach (var temp_processplan in Temp_ProcessPlans)
+        {
+            ProcessPlan processplan = new ProcessPlan();
+            {
+                processplan.FinishedGoodsID = finished_goods_name;
+                processplan.ProcessPlanName = temp_processplan.ProcessName;
+                processplan.ProcessPlanDescription = temp_processplan.ProcessPlanDescription;
+                processplan.OutputName = temp_processplan.OutputName;
+                processplan.IsFinalProcess = temp_processplan.isFinalProcess;
+                processplan.ProcessOutputWeight = temp_processplan.ProcessOpeningQuantity;
+
+                processplan.ProcessOutputUnit = temp_processplan.OutputUnit;
+                processplan.ProcessScrapQuantity = temp_processplan.ProcessScrapQuantity;
+                processplan.ProcessBufferLevelQuantity = temp_processplan.ProcessBufferLevelQuantity;
+                processplan.ProcessAvailableQuantity = 0;
+                processplan.ProcessOpeningQuantity = 0;
+                processplan.ProcessStoreQuantity= 0 ;
+                processplan.ProcessProductionQuantity = 0;
+                processplan.ProcessQualityQuantity = 0;
+                processplan.ProcessDispatchQuantity = 0;
+                processplan.CreatedBy = "Apurva";
+                processplan.CreationTime = DateTime.Now;
+
+            };
+            await processplanservice.AddProcessPlan(processplan);
+            await _context.SaveChangesAsync();
+            processplan = new ProcessPlan();
+            base.StateHasChanged();
+
+        }
+        //processplan = new ProcessPlan();
+        _context.Database.ExecuteSqlRaw("Truncate Table Tbl_Temp_ProcessPlan");
+        await _context.SaveChangesAsync();
+
+        Temp_ProcessPlans = await Task.Run(() => temp_processplanservice.GetTemp_ProcessPlan());
+        await _context.SaveChangesAsync();
+        base.StateHasChanged(); 
+    }
+
+    private async void SaveQualityParameter()
+    {
+        foreach (var temp_qualityparameter in Temp_QualityParameters)
+        {
+            QualityParameter qualityparameter = new QualityParameter();
+            {
+                qualityparameter.ProcessPlanID = pp_id;
+                qualityparameter.OperationName = temp_qualityparameter.OperatorName;
+                qualityparameter.Value = temp_qualityparameter.Value;
+                qualityparameter.UnitName = temp_qualityparameter.UnitName;
+
+                qualityparameter.QualityParameterName = temp_qualityparameter.QualityParameterName;
+
+            };
+            await qualityparameterservice.AddQualityParameter(qualityparameter);
+            await _context.SaveChangesAsync();
+            qualityparameter = new QualityParameter();
+            base.StateHasChanged();
+
+        }
+        qualityparameter = new QualityParameter();
+
+        _context.Database.ExecuteSqlRaw("Truncate Table Tbl_Temp_QualityParameters");
+        await _context.SaveChangesAsync();
+    }
+
+    private async void HandleValidSubmit()
+    {
+        try
+        {
+            temp_processplan.CreatedBy = "Apurva";
+            temp_processplan.CreationTime = DateTime.Now;
+
+            await temp_processplanservice.AddTemp_ProcessPlan(temp_processplan);
+            pp_id = temp_processplan.ProcessPlanID;
+            await _context.SaveChangesAsync();
+            base.StateHasChanged();
+
+            TempProcessPlan = await Task.Run(() => temp_processplanservice.GetTemp_ProcessPlan());
+            base.StateHasChanged();
+            temp_processplan.FinishedGoodsID = finished_goods_name;
+            base.StateHasChanged();
+
+            if (temp_processplan.isQualityRequired == true)
+            {
+                this.IsVisible = true;
+            }
+
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+        temp_processplan = new Temp_ProcessPlan();
+        base.StateHasChanged();
+
+
+
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<Temp_QualityParameter> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+
+                await temp_qualityparameterservice.AddTemp_QualityParameter(Args.Data);
+
+                //temp_qualityparameter.ProcessPlanID = temp_processplan.ProcessPlanID;
+
+                Temp_QualityParameters = (await temp_qualityparameterservice.GetTemp_QualityParameter()).ToList();
+            }
+            else
+            {
+                await temp_qualityparameterservice.UpdateQualityParameter(Args.Data);
+                Temp_QualityParameters = (await temp_qualityparameterservice.GetTemp_QualityParameter()).ToList();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await temp_qualityparameterservice.DeleteQualityParameter(Args.Data.QualityParameterID);
+        }
+    }
+}
+
+
+<style>
+    .margin {
+        margin-left: auto;
+        margin-right: auto;
+/*        margin-bottom: auto;*/    
+    }
+</style>
+<style type="text/css" class="cssStyles">
+    .detailtable td {
+        font-size: 13px;
+        padding: 4px;
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .photo {
+        width: 100px;
+        height: 100px;
+        border-radius: 50px;
+        box-shadow: inset 0 0 1px #e0e0e0, inset 0 0 14px rgba(0,0,0,0.2);
+    }
+</style>

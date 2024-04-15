@@ -1,0 +1,89 @@
+﻿@page "/SalesOrderReport"
+
+@using ATM.Models
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+
+@inject SalesOrderService salesorderservice
+@inject CustomerService customerservice
+@inject ATM.Data.ApplicationDbContext _context
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head> 
+
+    <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">  Sales Order Report</h4>
+    </div><br />
+
+<div style="margin-left:auto; margin-right:auto;">
+
+<SfGrid DataSource="@SalesOrders" AllowFiltering="true" AllowGrouping="true" AllowSorting="true" >
+     <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+    </GridEditSettings>
+ <GridTemplates>
+        <DetailTemplate>
+            @{
+                var salesorder = (context as SalesOrder);
+                      <SfGrid TValue="DetailedSalesOrder" Query="@GetDetailedQuery(salesorder)" DataSource="@DetailedSalesOrders" Width="auto">
+                              <GridColumns>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.SrNo) HeaderText=" SrNo" Width="200"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.FG_Name) HeaderText="Finished Goods Name" Width="200"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.Description) Width="200" HeaderText=" Description"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.UnitName) Width="200" HeaderText="Unit"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.HSNCode) Width="200" HeaderText="HSN Code"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.BaseAmount) Width="200" HeaderText="Base Amount"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.DiscountPercent) Width="200" HeaderText="Discount Percent"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.SGSTPercent) Width="200" HeaderText=" SGST Percent"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.CGSTPercent) Width="200" HeaderText="CGST Percent"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.IGSTPercent) Width="200" HeaderText="IGST Percent"></GridColumn>
+                              <GridColumn Field=@nameof(DetailedSalesOrder.Amount) Width="200" HeaderText="Amount"></GridColumn>
+
+                              <GridColumn Field=@nameof(DetailedSalesOrder.SubTotal) Width="200" HeaderText="SubTotal"></GridColumn>
+                             
+                              </GridColumns>
+                      </SfGrid>
+            }
+        </DetailTemplate>
+    </GridTemplates>
+    <GridColumns>
+         <GridColumn Field=@nameof(SalesOrder.SalesOrderNumber) HeaderText="Customer Name" Width="auto"> </GridColumn>
+            <GridColumn Field=@nameof(SalesOrder.Fyear) HeaderText="Fiscal Year" Width="auto"> </GridColumn>
+            <GridColumn Field=@nameof(SalesOrder.DateOfSalesOrder) HeaderText="Date" Width="auto"> </GridColumn>
+            <GridColumn Field=@nameof(SalesOrder.TotalGSTAmount) HeaderText="Total GST Amount" Width="auto"> </GridColumn>
+           <GridForeignColumn Field="@nameof(SalesOrder.CustomerID)" HeaderText="Customer Name" Width="auto" ForeignDataSource="Customers" ForeignKeyValue="CustomerName"> </GridForeignColumn>
+
+            <GridColumn Field=@nameof(SalesOrder.TotalAmount) HeaderText="Total Amount" Width="auto"> </GridColumn>
+  
+           
+         </GridColumns>
+</SfGrid>
+</div>
+@code{
+    public Query GetDetailedQuery(SalesOrder salesorder)
+    {
+        //return new Query().Where("SalesOrderNumber"+"Fyear", "equal", salesorder.SalesOrderNumber + salesorder.Fyear );
+        return new Query().Where("SalesOrderNumber", "equal", salesorder.SalesOrderNumber);
+    }
+    public List<SalesOrder> SalesOrders { get; set; }
+    public List<DetailedSalesOrder> DetailedSalesOrders { get; set; }
+    public List<Customer> Customers { get; set; }
+    Customer customer = new Customer();
+
+    
+    protected override async Task OnInitializedAsync()
+    {
+        SalesOrders = await Task.Run(() => salesorderservice.GetSalesOrders());
+        DetailedSalesOrders = await Task.Run(() => salesorderservice.GetDetailedSalesOrder());
+        Customers = await Task.Run(() => customerservice.GetCustomers());
+    }
+}
+<style>
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+</style>

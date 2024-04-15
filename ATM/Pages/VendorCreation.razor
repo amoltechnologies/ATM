@@ -1,0 +1,462 @@
+﻿@page "/VendorCreation"
+@inject VendorService vendorservice
+@inject VendorPlantService vendorplantservice
+@inject StateService stateservice
+@inject Temp_VendorPlantService temp_vendorplantservice
+@inject ATM.Data.ApplicationDbContext _context
+@using Syncfusion.Blazor 
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Cards
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using ATM.Models
+@using Microsoft.EntityFrameworkCore;
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head> 
+
+  <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">Let's create A Vendor</h4>
+    </div><br /><br />
+<EditForm Model=@vendor >
+     <DataAnnotationsValidator />
+<FluentValidationValidator TValidator="VendorFluentvalidation" />
+
+   <div class="row">
+        <div class=" margin col-md-3 col-lg-3;  ">
+            <br />
+            Vendor Name
+            <SfTextBox ID="VendorName"  @bind-Value="vendor.VendorName"></SfTextBox>
+             <br />
+       
+        </div>
+        <div class="margin col-md-3 col-lg-3" >
+         <br />
+            Address
+            <SfTextBox Multiline="true" ID="VendorAddress"  @bind-Value="vendor.Address"></SfTextBox>
+
+        <br />
+         </div>
+         <div class="margin col-md-3 col-lg-3 col-sm-3; ">
+             <br />
+                City
+             <SfTextBox ID="City"  @bind-Value="vendor.City"></SfTextBox>
+
+             <br />
+         </div>
+     </div>
+       <div class="row">
+         <div class=" margin col-md-3">
+             
+       
+         </div>
+          <div class=" margin col-md-3">
+            
+          
+         </div>
+          <div class=" margin col-md-3">
+            
+         </div>
+     </div>
+     
+     <div class="row">
+             <div class=" margin col-md-3 col-lg-3 col-sm-3;  ">
+            <br />
+              State
+            <SfDropDownList  TValue="string" ID="state" TItem="State" @bind-Value="state_name" DataSource="@States">
+                <DropDownListFieldSettings Value="StateName"></DropDownListFieldSettings>
+                 <DropDownListEvents TValue="string" TItem="State" ValueChange="showdata"></DropDownListEvents>
+            </SfDropDownList>    
+             <br />
+       
+            </div>
+            <div class="margin col-md-3 col-lg-3 col-sm-3;  ">
+             <br />
+             Pincode
+             <SfTextBox   ID="Pincode"  @bind-Value="vendor.PINCode"></SfTextBox>
+
+             <br />
+            </div>
+            <div class="margin col-md-3 col-lg-3 col-sm-3;  ">
+             <br />
+            Opening Balance
+            <SfNumericTextBox TValue="decimal" @bind-Value="vendor.OpeningBalance" ></SfNumericTextBox>
+             <br />
+            </div>
+     </div>
+      <div class="row">
+         <div class=" margin col-md-3">
+             
+       
+         </div>
+          <div class=" margin col-md-3">
+             
+          
+         </div>
+          <div class=" margin col-md-3">
+            
+     
+         </div>
+     </div>
+      <div class="row">
+             <div class=" margin col-md-3 col-lg-3 col-sm-3;  ">
+            <br />
+            Primary Contact Name            
+                <SfTextBox ID="primaryContactName"  @bind-Value="vendor.PrimaryContactPersonName"></SfTextBox>
+             <br />
+       
+            </div>
+            <div class="margin col-md-3 col-lg-3 col-sm-3;  ">
+             <br />
+            Primary Contact No.
+             <SfTextBox ID="ContactNumber"@bind-Value="vendor.PrimaryContactPersonContact"></SfTextBox>
+
+             <br />
+            </div>
+            <div class="margin col-md-3 col-lg-3 col-sm-3;  ">
+             <br />
+            Email ID
+             <SfTextBox   ID="Pincode" @bind-Value="vendor.VendorEmailID"></SfTextBox>
+             <br />
+            </div>
+     </div>
+      <div class="row">
+         <div class=" margin col-md-3">
+             
+         </div>
+          <div class=" margin col-md-3">
+             
+          
+         </div>
+          <div class=" margin col-md-3">
+             
+     
+         </div>
+     </div>
+     <div class="row">
+          <div class=" margin col-md-3">
+              <br />
+               GST No.
+            <SfTextBox ID="VendorName"  @bind-Value="vendor.GSTNo"></SfTextBox> 
+         </div>
+          <div class=" margin col-md-3">
+              <br />
+                 PAN No.
+                 <SfTextBox ID="VendorName" @bind-Value="vendor.PANNo"></SfTextBox>
+         </div>
+          <div class=" margin col-md-3">
+             
+         </div>
+     </div>
+    
+</EditForm>
+ 
+<br />
+<div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; border-radius:10px; color:white; font-size:17px"> Add Vendor Plant</h4>
+    </div><br />
+         <div class="row">
+                        <div class=" margin col-md-3  ">
+                            <br />
+                           Plant Name
+                           <SfTextBox  ID="PlantNamere" @bind-Value="temp_vendorplant.VendorPlantName" ></SfTextBox>
+                           
+
+                        </div>
+                         <div class=" margin col-md-3  ">
+                            <br />
+                           Plant Address
+                           <SfTextBox Multiline="true"  ID="PlantAddress" @bind-Value="temp_vendorplant.VendorPlantAddress" ></SfTextBox>
+
+                        </div>
+                         <div class=" margin  col-md-3 ">
+                            <br />
+                            Plant City
+                           <SfTextBox  ID="PlantCity" @bind-Value="temp_vendorplant.VendorPlantCity" ></SfTextBox>
+                         </div>
+                </div>
+
+            <div class="row">
+                        <div class=" margin col-md-3  ">
+                            <br />
+                          Plant state
+                       
+                        <SfDropDownList  TValue="string" ID="vplantstate" TItem="State" @bind-Value="plant_state_name" DataSource="@States">
+                        <DropDownListFieldSettings Value="StateName"></DropDownListFieldSettings>
+                        <DropDownListEvents TValue="string" TItem="State" ValueChange="showdata1"></DropDownListEvents>
+                        </SfDropDownList>   
+                        </div>
+
+                <div class=" margin col-md-3  ">
+                            <br />
+                         Plant Pincode
+                         <SfTextBox  ID="PlantPincode" @bind-Value="temp_vendorplant.VendorPlantPincode" ></SfTextBox>
+
+
+                </div>
+                <div class=" margin  col-md-3 ">
+                            <br />
+                        Plant PAN Number
+                        <SfTextBox  ID="PlantPANno" @bind-Value="temp_vendorplant.VendorplantPANNo" ></SfTextBox>
+                </div>
+            </div>
+            <div class="row">
+                        <div class=" margin col-md-3  ">
+                        <br />
+                         Plant GST Number
+                        <SfTextBox  ID="PlantGSTNo" @bind-Value="temp_vendorplant.VendorPlantGSTNo" ></SfTextBox>
+                        <br />
+                        </div>
+                         <div class=" margin col-md-3  ">
+                        <br />
+                        Opening Balance
+                        <SfNumericTextBox TValue="decimal?" @bind-Value=temp_vendorplant.VendorPlantOpeningBalance ></SfNumericTextBox>
+                        <br />
+                        </div>
+                        <div class=" margin  col-md-3 ">
+                        <br />
+                        Contact Person Name
+                        <SfTextBox  ID="ContactPersonName" @bind-Value="temp_vendorplant.VendorPlantContactPersonName" ></SfTextBox>
+                        <br />
+                        </div>
+            </div>
+             <div class="row">
+                         <div class=" margin  col-md-3 ">
+                             <br />
+                         Contact Number
+                         <SfTextBox  ID="ContactNumber" @bind-Value="temp_vendorplant.VendorPlantContactNumber " ></SfTextBox>
+                         </div>
+                          <div class=" margin  col-md-3 ">
+                              <br />
+                            Email ID
+                         <SfTextBox  ID="EmailID" @bind-Value="temp_vendorplant.VendorPlantEmailID " ></SfTextBox>
+                         <br />
+                         </div>
+                          <div class=" margin  col-md-3 ">
+                              <br /><br />
+                         </div>
+             </div>
+             <div class="row">
+             <div class=" margin col-md-3 col-lg-3 col-sm-3;  ">
+            <br />
+            
+            </div>
+            <div class="margin col-md-3 col-lg-3 col-sm-3;  " style="text-align:center">
+             <br />
+              <button  class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; border-radius:10px; color:aliceblue; margin-bottom:40px;" @onclick="HandleValidSubmit1">
+                 Add Vendor Plant</button>
+          @*  <button  class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; color:aliceblue; margin-bottom:40px;" @onclick="Save">
+                 Save Vendor Plant</button>*@
+ 
+            </div>
+            <div class="margin col-md-3 col-lg-3 col-sm-3; ">
+             <br />
+           </div>
+            </div>
+       
+ <br />
+
+<div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">  Vendor Plant Summary</h4>
+</div><br />
+<div style="margin-left:auto; margin-right:auto;">
+
+<SfGrid ID="Temp_VendorGrid"  Width="auto" 
+       DataSource="@Temp_VendorPlants" >
+    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+    </GridEditSettings>
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridEvents   TValue="Temp_VendorPlant">
+    </GridEvents>
+    <GridColumns>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantID)" HeaderText="Sr.No." AllowFiltering="true" Width="160"></GridColumn>
+
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantName)"  HeaderText="Plant Name" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantAddress)" HeaderText="Plant Address" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantCity)" HeaderText="City" AllowFiltering="true" Width="160"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantState)" HeaderText="State" AllowFiltering="true" Width="160"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantPincode)" HeaderText="Pincode" AllowFiltering="true" Width="160"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorplantPANNo)" HeaderText="PAN No." AllowFiltering="true" Width="160"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantGSTNo)" HeaderText="GST No." AllowFiltering="true" Width="160"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantOpeningBalance)" HeaderText="Opening Balance" AllowFiltering="true" Width="160"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantContactPersonName)" HeaderText="Contact Person Name" AllowFiltering="true" Width="160"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantContactNumber)" HeaderText="Contact Number" AllowFiltering="true" Width="160"></GridColumn>
+        <GridColumn Field="@nameof(Temp_VendorPlant.VendorPlantEmailID)" HeaderText="Email ID" AllowFiltering="true" Width="160"></GridColumn>
+        
+    </GridColumns>
+</SfGrid>
+</div>
+<br />
+<div class="row" style="text-align:center">
+    <div class="col-md-3 col-sm-3 col-lg-3 margin">
+        <button  class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; border-radius:10px; color:aliceblue; margin-bottom:40px;" @onclick="Save">
+                 Save Vendor </button>
+    </div>
+       
+</div>
+                           
+<style>
+    .e-headercell{
+        color:blueviolet;
+        font-size:30px;
+        text-align:center;
+        
+    }
+</style>
+
+
+@code {
+    public List<Vendor> Vendors { get; set; }
+    public List<VendorPlant> VendorPlants { get; set; }
+    public List<State> States { get; set; }
+    public List<Temp_VendorPlant> Temp_VendorPlants { get; set; }
+    public int vendorid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Vendors = await Task.Run(() => vendorservice.GetVendors());
+        VendorPlants = await Task.Run(() => vendorplantservice.GetVendorPlants());
+        States = await Task.Run(() => stateservice.GetStates());
+        Temp_VendorPlants = await Task.Run(() => temp_vendorplantservice.GetTempVendorPlants());
+
+    }
+
+    Vendor vendor = new Vendor();
+    VendorPlant vendorplant = new VendorPlant();
+    State state = new State();
+    Temp_VendorPlant temp_vendorplant = new Temp_VendorPlant();
+
+
+
+    private async void HandleValidSubmit()
+    {
+
+
+
+
+
+    }
+    private async void HandleValidSubmit1()
+    {
+        temp_vendorplant.CreatedBy = "Apurva";
+        temp_vendorplant.CreationTime=DateTime.Now;
+
+        try
+        {
+            await temp_vendorplantservice.AddTempVendorPlant(temp_vendorplant);
+            await _context.SaveChangesAsync();
+            Temp_VendorPlants = await Task.Run(() => temp_vendorplantservice.GetTempVendorPlants());
+            base.StateHasChanged();
+
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+        temp_vendorplant = new Temp_VendorPlant();
+
+        base.StateHasChanged();
+
+
+    }
+    private async void Save()
+    {
+        try
+        {
+            vendor.CreatedBy = "Apurva";
+            vendor.CreationTime = DateTime.Now;
+            await vendorservice.AddVendor(vendor);
+            vendorid = vendor.VendorID;
+            await _context.SaveChangesAsync();
+
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+        vendor = new Vendor();
+
+        base.StateHasChanged();
+
+       
+        foreach (var temp_vendorplant in Temp_VendorPlants)
+        {
+             VendorPlant vendorp = new VendorPlant();
+            {
+                vendorp.VendorID = vendorid;
+                vendorp.VendorPlantName = temp_vendorplant.VendorPlantName;
+                vendorp.VendorPlantAddress = temp_vendorplant.VendorPlantAddress;
+                vendorp.VendorPlantCity = temp_vendorplant.VendorPlantCity;
+                vendorp.VendorPlantContactPersonName = temp_vendorplant.VendorPlantContactPersonName;
+                vendorp.VendorPlantContactNumber = temp_vendorplant.VendorPlantContactNumber;
+                vendorp.VendorPlantGSTNo = temp_vendorplant.VendorPlantGSTNo;
+                vendorp.VendorPlantOpeningBalance = temp_vendorplant.VendorPlantOpeningBalance;
+                vendorp.VendorplantPANNo = temp_vendorplant.VendorplantPANNo;
+                vendorp.VendorPlantState = temp_vendorplant.VendorPlantState;
+                vendorp.VendorPlantPincode = temp_vendorplant.VendorPlantPincode;
+                vendorp.VendorPlantEmailID = temp_vendorplant.VendorPlantEmailID;
+                vendorp.CreatedBy = "Apurva";
+                vendorp.CreationTime = DateTime.Now;
+            };
+            await vendorplantservice.AddVendorPlant(vendorp);
+            await _context.SaveChangesAsync();
+            vendorp = new VendorPlant();
+            base.StateHasChanged(); 
+
+        } 
+        vendor = new Vendor();
+      
+        _context.Database.ExecuteSqlRaw("Truncate Table Tbl_Temp_VendorPlant");
+        await _context.SaveChangesAsync();
+        base.StateHasChanged(); 
+
+        Temp_VendorPlants = await Task.Run(() => temp_vendorplantservice.GetTempVendorPlants());
+        await _context.SaveChangesAsync();
+        base.StateHasChanged(); 
+
+
+    }
+}
+@code{
+    public string  state_name { get; set; }
+
+    protected void showdata()
+    {
+        vendor.State = state_name;
+
+
+
+    }
+
+     public string  plant_state_name { get; set; }
+
+    protected void showdata1()
+    {
+        temp_vendorplant.VendorPlantState = plant_state_name;
+
+    }
+}
+@code {
+ private bool IsVisible { get; set; } = false;
+
+    private void OpenDialog()
+    {
+        this.IsVisible = true;
+    }
+
+    private void CloseDialog()
+    {
+        this.IsVisible = false;
+    }
+}
+<style>
+    .margin{
+        margin-left:auto;
+        margin-right:auto;
+       
+    }
+   
+</style>

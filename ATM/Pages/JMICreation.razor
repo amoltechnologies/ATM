@@ -1,0 +1,216 @@
+﻿@page "/JMICreation"
+
+
+@using ATM.Models;
+@using ATM.Data;
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using Microsoft.EntityFrameworkCore;
+
+@inject ATM.Data.ApplicationDbContext _context
+@inject MaterialTypeService materialtypeservice
+@inject MaterialService materialservice
+@inject CustomerService customerservice
+@inject UnitService unitservice
+@inject JMIService jmiservice
+@inject SalesOrderService salesorderservice
+@inject FinishedGoodsService finishedgoodsservice
+@inject BOMService  bomservice
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head>
+
+<body style="font-family: Montserrat; font-weight:600">
+
+    <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; padding-right:1%; padding-top:1%; color:white; font-size:19px">Let's create JMI </h4>
+    </div><br />
+
+     <div class="row " >
+        <div class="col-3 margin">
+            <br />
+            JMI No
+            <SfTextBox CssClass="e-input-group" ID="jmi" Value="@jmi" Readonly=true style="background-color: white"></SfTextBox>
+            <br />
+        </div>
+        <div class="col-3 margin">
+            <br />
+             Customer Name
+            <SfDropDownList ID="customername" TValue="int" TItem="Customer"  DataSource="@Customers" @bind-Value="CustomerID" >
+                 <DropDownListEvents TValue="int" TItem="Customer" ValueChange="OnCustomerChange"></DropDownListEvents>
+                <DropDownListFieldSettings Value="CustomerID" Text="CustomerName" ></DropDownListFieldSettings>
+            </SfDropDownList>
+            <br />
+        </div>
+        <div class="col-3 margin">
+            <br />
+            Date of JMI 
+            <SfDatePicker TValue="DateTime" Format="dd-MM-yyyy" Value="@DateValue" >
+                <DatePickerEvents TValue="DateTime" ValueChange="@onChange"></DatePickerEvents>
+            </SfDatePicker>
+            <br />
+        </div>
+
+    </div>
+    <div class="row " >
+        <div class="col-md-3 margin">
+            <br />
+            Sales Order NO 
+            
+            <SfDropDownList TValue="string" TItem="SelectListItem" DataSource="@SONumberCustom" @bind-Value="@sostring">
+                <DropDownListEvents TValue="string" TItem="SelectListItem" ValueChange="GetDetailedSO"></DropDownListEvents>
+                <DropDownListFieldSettings Value="Value" Text="Text"></DropDownListFieldSettings>
+            </SfDropDownList>
+            <br />
+            
+        </div>
+        <div class="col-md-3 margin"></div>
+        <div class="col-md-3 margin"></div>
+    </div>
+    <br /><br />
+    <SfGrid ID="BOMGrid" Width="auto"  DataSource="@BOMbySalesOrder">
+
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridEvents OnActionBegin="ActionBeginHandler" TValue="BOM">
+    </GridEvents>
+    <GridColumns>
+@*        <GridForeignColumn Field="@nameof(ProcessPlan.FinishedGoodsID)" HeaderText="Finished Goods Name" ForeignDataSource="FinishedGood" ForeignKeyValue="FG_Name" ></GridForeignColumn>
+*@
+        <GridColumn Field="@nameof(ProcessPlan.ProcessPlanName)" HeaderText="Process Name" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessPlanDescription)" HeaderText="Description" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.OutputName)" HeaderText="Output Name" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessOutputWeight)" HeaderText="Output Quantity" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessOutputUnit)" HeaderText="Output Unit" Width="160" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(ProcessPlan.ProcessScrapQuantity)" HeaderText="Scrap Quantity" Width="160" AllowFiltering="true"></GridColumn>
+    
+    </GridColumns>
+    </SfGrid>
+
+    <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; padding-right:1%; padding-top:1%; color:white; font-size:19px">Add Item </h4>
+    </div><br />
+
+    <div class="row">
+        <div class="col-md-3 margin">
+            Material Type
+              <SfDropDownList TValue="string" TItem="SelectListItem" DataSource="@SONumberCustom" @bind-Value="@sostring">
+                <DropDownListEvents TValue="string" TItem="SelectListItem" ValueChange="GetDetailedSO"></DropDownListEvents>
+                <DropDownListFieldSettings Value="Value" Text="Text"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+        <div class="col-md-3 margin">
+            Material Name
+
+        </div>
+        <div class="col-md-3 margin">
+            Quantity
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3 margin">
+            Unit
+             <SfTextBox ></SfTextBox>
+        </div>
+        <div class="col-md-3 margin">
+            Description
+
+        </div>
+        <div class="col-md-3 margin">
+            HSN Code
+
+        </div>
+    </div>
+
+</body>
+
+<style>
+    .margin{
+        margin-left:auto;
+        margin-right:auto;
+    }
+ 
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+
+</style>
+
+@code{
+
+    public string jmi = null!;
+    public int CustomerID;
+    public string Fyear;
+    public string fyear1;
+    public DateTime DateValue { get; set; } = DateTime.Now;
+    public int sonumber { get; set; }
+    public string sostring { get; set; } = null!;
+
+
+    public List<JMI> JMIs { get; set; } = null;
+    public List<Customer> Customers { get; set; } = null!;
+    public List<SelectListItem> SONumberCustom { get; set; } = null!;
+    public List<DetailedSalesOrder> DetailedSO { get; set; } = null!;
+    public List<DetailedSalesOrder> DetailedSalesOrders { get; set; } = null!;
+    public List<BOM> BOMbySalesOrder { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+            Customers = await Task.Run(() => customerservice.GetCustomers());
+
+            //po = await Task.Run(() => salesorderservice.GetPONumber(DateValue));
+            jmi = await Task.Run(() => jmiservice.GetJMIID(DateValue));
+            //Fyear = await Task.Run(() => purchaseorderservice.GetFYear(DateValue));
+            Fyear = await Task.Run(() => jmiservice.GetFYear(DateValue));
+            DetailedSalesOrders = await Task.Run(() => salesorderservice.GetDetailedSalesOrder());
+    }
+
+     protected async void onChange(Syncfusion.Blazor.Calendars.ChangedEventArgs<DateTime> args)
+    {
+        DateValue = args.Value;
+        jmi = jmiservice.GetJMIID(DateValue).Result;
+        Fyear = await Task.Run(() => jmiservice.GetFYear(DateValue));
+        StateHasChanged();
+    }
+
+     public void OnCustomerChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<int, Customer> args)
+    {
+        SONumberCustom = Task.Run(() => salesorderservice.GetSOByCustomer(CustomerID)).Result;
+    }
+
+     public void GetDetailedSO(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, SelectListItem> args)
+    {
+        //e.g."2/2022-2023"
+        var id = args.Value.Split("/");    // ["2", "2022-2023"]
+        int sonumber1 = Convert.ToInt32(id[0]);
+        sonumber = sonumber1;
+        fyear1 = id[1];
+        DetailedSO = Task.Run(() => salesorderservice.GetDetailsByID(Convert.ToInt32(id[0]), id[1])).Result;
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<BOM> Args)
+    {
+        //if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        //{
+        //    if (Args.Action == "Add")
+        //    {
+        //        await processplanservice.AddProcessPlan(Args.Data);
+        //        ProcessPlans = (await processplanservice.GetProcessPlans()).ToList();
+        //    }
+        //    else
+        //    {
+        //        await processplanservice.UpdateProcessPlan(Args.Data);
+        //        ProcessPlans = (await processplanservice.GetProcessPlans()).ToList();
+        //    }
+        //}
+        //if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        //{
+        //    await processplanservice.DeleteProcessPlan(Args.Data.ProcessPlanID);
+        //}
+    }
+}

@@ -1,0 +1,115 @@
+﻿@page "/CustomerReport"
+
+@using ATM.Models
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+
+@inject CustomerService customerservice
+@inject CustomerPlantService customerplantservice
+@inject ATM.Data.ApplicationDbContext _context
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head> 
+
+ <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">Customer Report</h4>
+    </div><br />
+
+<div style="margin-left:auto; margin-right:auto;">
+
+<SfGrid DataSource="@Customers" AllowFiltering="true" AllowGrouping="true" AllowSorting="true" >
+     <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+    </GridEditSettings>
+ <GridTemplates>
+        <DetailTemplate>
+            @{
+                var customer = (context as Customer);
+                      <SfGrid TValue="CustomerPlant" Query="@GetPlantQuery(customer)" DataSource="@CustomerPlants" Width="auto">
+                              <GridColumns>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantName) HeaderText="Plant Name" Width="auto"></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantAddress) HeaderText="Plant Address" Width="auto"></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.VendorCode) Width="auto" HeaderText="Vendor Code"></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantCity) Width="auto" HeaderText="city"></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantState) Width="auto" HeaderText="State"></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantPincode) Width="auto" HeaderText="Pincode"></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantEmailID) HeaderText="Email ID" Width="auto"></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantOpeningBalance) Width="auto" HeaderText="Opening Balance"></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantGSTNo) Width="auto" HeaderText="GST No."></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantPANNo) Width="auto" HeaderText="PAN No."></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantContactPersonName) HeaderText="Contact Person Name" Width="auto"></GridColumn>
+                              <GridColumn Field=@nameof(CustomerPlant.CustomerPlantContactNumber) HeaderText="Contact Number" Width="auto"></GridColumn>
+                              </GridColumns>
+                      </SfGrid>
+            }
+        </DetailTemplate>
+    </GridTemplates>
+    <GridColumns>
+         <GridColumn Field=@nameof(Customer.CustomerName) HeaderText="Customer Name" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.City) HeaderText="City" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.State) HeaderText="State" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.Address) HeaderText="Address" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.PINCode) HeaderText="PIN Code" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.VendorCode) HeaderText="Vendor Code" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.PANNo) HeaderText="PAN No." Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.GSTNo) HeaderText="GST No." Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.EmailID) HeaderText="Email ID" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.PrimaryContactPersonContact) HeaderText="Contact Person Name" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.PrimaryContactPersonContact) HeaderText="Contact Number" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Customer.OpeningBalance) HeaderText="Opening Balance" Width="165"> </GridColumn>
+           
+         </GridColumns>
+</SfGrid>
+</div>
+@code{
+    public Query GetPlantQuery(Customer customer)
+    {
+        return new Query().Where("CustomerID", "equal", customer.CustomerID);
+    }
+}
+<style>
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+</style>
+@code {
+
+    public List<Customer> Customers { get; set; }
+    public List<CustomerPlant> CustomerPlants { get; set; }
+    SfGrid<CustomerPlant> CustomerPlantGrid { get; set; }
+    CustomerPlant customerplant = new CustomerPlant();
+    Customer customer = new Customer();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        CustomerPlants = await Task.Run(() => customerplantservice.GetCustomerPlants());
+        Customers = await Task.Run(() => customerservice.GetCustomers());
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<CustomerPlant> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await customerplantservice.AddCustomerPlant(Args.Data);
+                CustomerPlants = (await customerplantservice.GetCustomerPlants()).ToList();
+            }
+            else
+            {
+                await customerplantservice.UpdateCustomerPlant(Args.Data);
+                CustomerPlants = (await customerplantservice.GetCustomerPlants()).ToList();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await customerplantservice.DeleteCustomerPlant(Args.Data.CustomerID);
+        }
+    }
+
+}

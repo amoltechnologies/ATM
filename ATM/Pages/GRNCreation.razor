@@ -1,0 +1,418 @@
+﻿@page "/GRNCreation"
+
+@using ATM.Models;
+@using ATM.Data;
+@using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Mvc.Rendering;
+
+
+@inject ATM.Data.ApplicationDbContext _context
+@inject SupplierService supplierservice
+@inject GRNService grnservice
+@inject PurchaseOrderService purchaseorderservice
+@inject MaterialTypeService materialtypeservice
+@inject MaterialService materialservice
+@inject StoreInService storeinservice
+@inject QualityInService qualityinservice
+
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head>
+
+<body style="font-family: Montserrat; ">
+
+    <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; padding-right:1%; padding-top:1%; font-weight:600; color:white; font-size:17px">Let's create A GRN</h4>
+    </div><br /><br />
+
+    <div class="row margin" >
+        <div class="col-3">
+            GRN Number
+            <SfTextBox ID="po" Value="@grnno" Readonly="true" style="background-color:white"></SfTextBox>
+        </div>
+        <div class="col-3 margin">
+            Select Date
+            <SfDatePicker TValue="DateTime" Format="dd-MM-yyyy" Value="@DateValue">
+                <DatePickerEvents TValue="DateTime" ValueChange="@onChange"></DatePickerEvents>
+            </SfDatePicker>
+        </div>
+        <div class="col-3 margin">
+             Supplier Name
+            <SfDropDownList TValue="int" Placeholder="Supplier" TItem="Supplier" @bind-Value="@supplierid" DataSource="@Suppliers">
+                <DropDownListEvents TValue="int" TItem="Supplier" ValueChange="OnSupplierChange"></DropDownListEvents>
+                <DropDownListFieldSettings Text="SupplierName" Value="SupplierID"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+        <div class="col-3 margin">
+             PO Number
+            <SfDropDownList TValue="string" TItem="SelectListItem" DataSource="@PONumberCustom" @bind-Value="@postring">
+                <DropDownListEvents TValue="string" TItem="SelectListItem" ValueChange="GetDetailedPO"></DropDownListEvents>
+                <DropDownListFieldSettings Value="Value" Text="Text"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+    </div>
+
+
+      <br /><br />
+        <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; padding-right:1%; padding-top:1%; font-weight:600; color:white; font-size:17px">Item Summary</h4>
+    </div><br />
+
+    <SfGrid @ref="Grid" DataSource="@DetailedPO" >
+        <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple"></GridSelectionSettings>
+@*        <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Batch"></GridEditSettings>*@        <GridColumns>
+            <GridColumn Field=@nameof(DetailedPurchaseOrder.DetailedPOID) HeaderText="PO ID" IsPrimaryKey="true" TextAlign="TextAlign.Right" ValidationRules="@(new ValidationRules { Required = true })" Type="ColumnType.Number" AllowEditing=false></GridColumn>
+            <GridColumn Field=@nameof(DetailedPurchaseOrder.PONumber) HeaderText="PO Number" ValidationRules="@(new ValidationRules{ Required=true})" AllowEditing=false></GridColumn>
+            <GridColumn Field=@nameof(DetailedPurchaseOrder.MaterialName) HeaderText="Material Name" AllowEditing=false></GridColumn>
+            <GridColumn Field=@nameof(DetailedPurchaseOrder.Quantity) HeaderText="Quantity" AllowEditing=false></GridColumn>
+            <GridColumn Field=@nameof(DetailedPurchaseOrder.Amount) HeaderText="Amount" AllowEditing=false></GridColumn>
+        </GridColumns>
+    </SfGrid>
+
+    <br />
+    <br />
+
+    <EditForm Model="@tempgrn" OnValidSubmit="@AddGRN">
+        <div class="row">
+            <div class="col-3 margin">
+                PO ID
+                <SfDropDownList DataSource="@DetailedPO" TItem="DetailedPurchaseOrder" TValue="int">
+                    <DropDownListFieldSettings Text="DetailedPOID" Value="DetailedPOID"></DropDownListFieldSettings>
+                    <DropDownListEvents TValue="int" TItem="DetailedPurchaseOrder" ValueChange="POIDChange"></DropDownListEvents>
+                </SfDropDownList>
+            </div>
+            <div class="col-3 margin">
+                Available Quantity
+                <SfNumericTextBox ShowSpinButton=false Value="@availablequantity" Readonly=true style="background-color:white"></SfNumericTextBox>
+            </div>
+            <div class="col-3 margin">
+                GRN Quantity
+                <SfNumericTextBox ShowSpinButton=false style="background-color:white" TValue="decimal" @bind-Value="@tempgrn.GRNQuantity"></SfNumericTextBox>
+            </div>
+        </div>
+        <br /><br />
+        <div class="row">
+            <div class="col-12" style="text-align:center">
+                @*<button type="submit" class="btn btn-primary">Add GRN</button>*@
+                      <button class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; border-radius:10px; font-weight:600; color:aliceblue; margin-bottom:40px;" type="submit">
+                Add GRN
+            </button>
+            </div>
+        </div>
+    </EditForm>
+
+    <br />
+    <br />
+
+    <SfGrid DataSource="@TemperoryGRNs" 
+            Width="auto" style="align-content:center" >
+        <GridEditSettings AllowEditing="true" AllowDeleting="true"></GridEditSettings>
+        <GridColumns>
+            <GridColumn Field=@nameof(TemperoryGRN.SrNo) HeaderText="Sr No" Width="100" AllowEditing=false></GridColumn>
+            <GridColumn Field=@nameof(TemperoryGRN.DetailedPOID) Width="200" HeaderText="Detailed PO ID" AllowEditing=false></GridColumn>
+            <GridColumn Field=@nameof(TemperoryGRN.Fyear) HeaderText="Fyear" Width="200" AllowEditing=false></GridColumn>
+            <GridForeignColumn Field=@nameof(TemperoryGRN.MaterialTypeID) Width="200" HeaderText="Material Type" ForeignKeyValue="MaterialTypeName" ForeignDataSource="@MaterialTypes"></GridForeignColumn>
+            <GridForeignColumn Field=@nameof(TemperoryGRN.MaterialID) Width="200" HeaderText="Material Name" ForeignKeyValue="MaterialName" ForeignDataSource="@Materials"></GridForeignColumn>
+            <GridColumn Field=@nameof(TemperoryGRN.GRNQuantity) Width="200" HeaderText="GRN Quantity" AllowEditing=true></GridColumn>
+        </GridColumns>
+    </SfGrid>
+
+    <br />
+    <br />
+
+    <div class="row">
+        <div class="col-12" style="text-align:center">
+            <button class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; border-radius:10px; font-weight:600; color:aliceblue; margin-bottom:40px;" @onclick="SaveGRN">
+                Save Purchase Order
+            </button>
+        </div>
+    </div>
+
+    <br />
+    <br />
+
+
+</body>
+@code {
+
+    public SfGrid<DetailedPurchaseOrder> Grid { get; set; }
+
+    //public string grnquantity { get; set; }
+    public string grnno { get; set; } = null!;
+    public string fyear { get; set; } = null!;
+    public string postring { get; set; } = null!;
+    //public string supplierid { get; set; } = null!;
+    public string Text { get; set; }
+    public string fyear1 { get; set; }
+    public string qty { get; set; }
+    public string TransactionID { get; set; }
+    public string UnitName { get; set; }
+
+    public int supplierid { get; set; }
+    public int ponumber { get; set; }
+    public int ponumber1 { get; set; }
+    //public int poid { get; set; }
+    public int materialid { get; set; }
+    public int materialtypeid { get; set; }
+    public int detailedpoid { get; set; }
+
+    public decimal grnquantity { get; set; }
+    public decimal availablequantity { get; set; }
+
+    public bool quality { get; set; }
+
+    public DateTime DateValue { get; set; } = DateTime.Now;
+
+    public List<Supplier> Suppliers { get; set; } = null!;
+    public List<PurchaseOrder> POCustom { get; set; } = null!;
+    public List<SelectListItem> PONumberCustom { get; set; } = null!;
+    //public List<PurchaseOrder> POFyear { get; set; } = null!;
+    public List<DetailedPurchaseOrder> DetailedPurchaseOrders { get; set; } = null!;
+    public List<DetailedPurchaseOrder> DetailedPO { get; set; } = null!;
+    public List<GRN> GRNs { get; set; } = null!;
+    public List<TemperoryGRN> TemperoryGRNs { get; set; } = null!;
+    public List<MaterialType> MaterialTypes { get; set; } = null!;
+    public List<Material> Materials { get; set; } = null!;
+    //public List<POModel> POModels { get; set; } = null!;
+
+    GRN grn = new GRN();
+    TemperoryGRN tempgrn = new TemperoryGRN();
+    Material material = new Material();
+    DetailedPurchaseOrder detailedpo = new DetailedPurchaseOrder();
+    StoreIn storein = new StoreIn();
+    QualityIn qualityin = new QualityIn();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Suppliers = await Task.Run(() => supplierservice.GetSuppliers());
+        grnno = grnservice.GetPONumber(DateValue).Result;
+        fyear = purchaseorderservice.GetFYear(DateValue).Result;
+        DetailedPurchaseOrders = await Task.Run(() => purchaseorderservice.GetDetailedPO());
+        GRNs = await Task.Run(() => grnservice.GetGRNs());
+        MaterialTypes = await Task.Run(() => materialtypeservice.GetMaterialTypes());
+        TemperoryGRNs = await Task.Run(() => grnservice.GetTempGRNs());
+        Materials = await Task.Run(() => materialservice.GetMaterials());
+        //PONumberCustom = await Task.Run(() => purchaseorderservice.GetPOList());
+    }
+
+    public async Task Clicked()
+    {
+        var getSelected = await Grid.GetSelectedRecordsAsync();
+        foreach (var sel in getSelected)
+        {
+            var index = await Grid.GetRowIndexByPrimaryKeyAsync(sel.DetailedPOID);
+            await Grid.UpdateCellAsync(index, "GRNQuantity", Text);
+        }
+    }
+
+    public void onChange(Syncfusion.Blazor.Calendars.ChangedEventArgs<DateTime> args)
+    {
+        DateValue = args.Value;
+        grnno = grnservice.GetPONumber(DateValue).Result;
+        fyear = purchaseorderservice.GetFYear(DateValue).Result;
+        StateHasChanged();
+    }
+
+    public void OnSupplierChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<int, Supplier> args)
+    {
+        PONumberCustom = Task.Run(() => purchaseorderservice.GetPOBySupplier(supplierid)).Result;
+    }
+
+    public void GetDetailedPO(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, SelectListItem> args)
+    {
+        //e.g."2/2022-2023"
+        var id = args.Value.Split("/");    // ["2", "2022-2023"]
+        int ponumber1 = Convert.ToInt32(id[0]);
+        ponumber = ponumber1;
+        fyear1 = id[1];
+        DetailedPO = Task.Run(() => purchaseorderservice.GetDetailsByID(ponumber1, fyear1)).Result;
+    }
+
+    public void POIDChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<int, DetailedPurchaseOrder> args)
+    {
+        detailedpoid = args.Value;
+
+        var qty = _context.Tbl_DetailedPurchaseOrder
+            .Where(a => a.DetailedPOID == detailedpoid)
+            .Select(a => a.GRNQuantity)
+            .First();
+
+        var id = _context.Tbl_DetailedPurchaseOrder
+            .Where(a => a.DetailedPOID == detailedpoid)
+            .Select(a => a.MaterialID)
+            .First();
+
+        var typeid = _context.Tbl_DetailedPurchaseOrder
+            .Where(a => a.DetailedPOID == detailedpoid)
+            .Select(a => a.MaterialTypeID)
+            .First();
+
+        var unit = _context.Tbl_DetailedPurchaseOrder
+            .Where(a => a.DetailedPOID == detailedpoid)
+            .Select(a => a.UnitName)
+            .First();
+
+        availablequantity = Convert.ToDecimal(qty);
+        materialid = id;
+        materialtypeid = typeid;
+        UnitName = unit;
+
+    }
+
+    private async void SaveGRN()
+    {
+        quality = await Task.Run(() => materialservice.GetQualityParameters(materialid));
+        TemperoryGRNs = Task.Run(() => grnservice.GetTempGRNs()).Result;
+        var max = grnservice.GetMaxGRNNo();
+
+        grn = new GRN();
+
+        foreach (var item in TemperoryGRNs)
+        {
+            grn.GRNNo = max;
+            grn.SrNo = item.SrNo;
+            grn.Fyear = item.Fyear;
+            grn.SupplierID = item.SupplierID;
+            grn.Date = item.Date;
+            grn.MaterialTypeID = item.MaterialTypeID;
+            grn.MaterialID = item.MaterialID;
+            grn.UnitName = item.UnitName;
+            grn.GRNQuantity = item.GRNQuantity;
+            grn.UserID = item.UserID;
+            grn.DetailedPOID = item.DetailedPOID;
+            grn.CreatedBy = item.CreatedBy;
+            grn.CreationTime = DateTime.Now;
+
+            try
+            {
+                await grnservice.AddGRN(grn);
+
+            }
+            catch
+            {
+                base.StateHasChanged();
+            }
+
+            if (quality == true)
+            {
+                qualityin = new QualityIn();
+
+                qualityin.MaterialTypeID = grn.MaterialTypeID;
+                qualityin.MaterialID = grn.MaterialID;
+                qualityin.InQuantity = grn.GRNQuantity;
+                qualityin.ReceivedFrom = "GRN";
+                qualityin.ReceivedTransactionID = material.ToString() + "/" + fyear;
+                qualityin.CreatedBy = "Tanaya";
+                qualityin.CreationTime = DateTime.Now;
+
+                try
+                {
+                    await qualityinservice.AddQualityIn(qualityin);
+
+                }
+                catch
+                {
+                    base.StateHasChanged();
+                }
+
+            }
+
+            else
+            {
+                storein = new StoreIn();
+
+                storein.MaterialTypeID = grn.MaterialTypeID;
+                storein.MaterialID = grn.MaterialID;
+                storein.InQuantity = grn.GRNQuantity;
+                storein.ReceivedFrom = "GRN";
+                storein.ReceivedTransactionID = material.ToString() + "/" + fyear;
+                storein.CreatedBy = "Tanaya";
+                storein.CreationTime = DateTime.Now;
+
+                try
+                {
+                    await storeinservice.AddStoreIn(storein);
+
+                }
+                catch
+                {
+                    base.StateHasChanged();
+                }
+            }
+
+            grn = new GRN();
+
+        }
+
+        base.StateHasChanged();
+        _context.Database.ExecuteSqlRaw("Truncate table Tbl_TemperoryGRN");
+        await _context.SaveChangesAsync();
+        base.StateHasChanged();
+
+        TemperoryGRNs = await Task.Run(() => grnservice.GetTempGRNs());
+
+    }
+
+    public async void AddGRN()
+    {
+        quality = await Task.Run(() => materialservice.GetQualityParameters(materialid));
+
+        tempgrn.Fyear = fyear;
+        tempgrn.SupplierID = supplierid;
+        tempgrn.Date = DateValue;
+        tempgrn.MaterialTypeID = Convert.ToInt32(materialtypeid);
+        tempgrn.MaterialID = materialid;
+        tempgrn.UnitName = UnitName;
+        tempgrn.UserID = 1;
+        tempgrn.DetailedPOID = detailedpoid;
+        tempgrn.CreatedBy = "Tanaya";
+        tempgrn.CreationTime = DateTime.Now;
+
+        try
+        {
+            await grnservice.AddTempGRN(tempgrn);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+
+        tempgrn = new TemperoryGRN();
+
+
+        TemperoryGRNs = await Task.Run(() => grnservice.GetTempGRNs());
+        base.StateHasChanged();
+
+    }
+
+
+    //public class POModel
+    //{
+
+    //    public string POCustom { get; set; }
+
+    //    public int PONumber { get; set; }
+
+    //    public string Fyear { get; set; }
+
+
+    //}
+
+}
+    <style>
+    .margin{
+        margin-left:auto;
+        margin-right:auto;
+    }
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+</style>

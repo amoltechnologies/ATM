@@ -1,0 +1,56 @@
+﻿@page "/displaycustomers"
+
+@using ATM.Models
+
+@inject CustomerService customerservice
+@inject ATM.Data.ApplicationDbContext _context
+
+<SfGrid ID="CustomerGrid" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Cancel", "Update", "Search" })" 
+        Height="315" DataSource="@Customers" AllowFiltering="true" AllowGrouping="true" AllowSorting="true">
+    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+    </GridEditSettings>
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridEvents OnActionBegin="ActionBeginHandler" TValue="Customer">
+    </GridEvents>
+    <GridColumns>
+        <GridColumn Field="@nameof(Customer.CustomerName)" HeaderText="Name" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(Customer.City)" HeaderText="City" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(Customer.PINCode)" HeaderText="Pin Code" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(Customer.State)" HeaderText="State" AllowFiltering="true"></GridColumn>
+        <GridColumn Field="@nameof(Customer.PrimaryContactPersonName)" HeaderText="Primary Contact Person" AllowFiltering="true"></GridColumn>
+    </GridColumns>
+</SfGrid>
+
+
+@code {
+
+    public List<Customer> Customers { get; set; }
+    SfGrid<Customer> CustomerGrid { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Customers = await Task.Run(() => customerservice.GetCustomers());
+    }
+
+    public async void ActionBeginHandler(ActionEventArgs<Customer> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await customerservice.AddCustomer(Args.Data);
+                Customers = (await customerservice.GetCustomers()).ToList();
+            }
+            else
+            {
+                await customerservice.UpdateCustomer(Args.Data);
+                Customers = (await customerservice.GetCustomers()).ToList();                
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await customerservice.DeleteCustomer(Args.Data.CustomerID);
+        }
+    }
+
+}

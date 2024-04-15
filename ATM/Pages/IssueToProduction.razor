@@ -1,0 +1,295 @@
+﻿@page "/IssueToProduction"
+
+@using ATM.Models;
+@using ATM.Data;
+@using Microsoft.EntityFrameworkCore;
+@using Microsoft.AspNetCore.Mvc.Rendering;
+@using Syncfusion.Blazor.Inputs;
+@using System.Data;
+
+@inject ATM.Data.ApplicationDbContext _context
+
+@inject GRNService grnservice
+@inject FinishedGoodsService finishedgoodsservice
+@inject PurchaseOrderService purchaseorderservice
+@inject SalesOrderService salesorderservice
+@inject StoreOutService storeoutservice
+@inject QualityOutService qualityoutservice
+@inject ProductionInService productioninservice
+@inject MaterialTypeService materialtypeservice
+@inject MaterialService materialservice
+@inject BOMService bomservice
+@inject ProcessPlanService processplanservice
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head>
+
+<body style="font-family: Montserrat; font-weight:600">
+
+
+    <div class="col-12" style="background-color:mediumpurple; border-radius:10px; border-bottom:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; padding-right:1%; padding-top:1%; font-weight:700">Issue To Production</h4>
+    </div>
+
+    <div class="row" style="padding:3%">
+        <div class="col-4">
+            Issue Number:
+            <SfTextBox ID="issueto" Value="@issuenumber" Readonly="true" style="background-color:white"></SfTextBox>
+        </div>
+        <div class="col-4">
+            Sales Order Number:
+            <SfDropDownList TItem="SelectListItem" TValue="string" DataSource="@SalesOrderNumber">
+                <DropDownListEvents TValue="string" TItem="SelectListItem" ValueChange="GetSalesDetails"></DropDownListEvents>
+                <DropDownListFieldSettings Text="Text" Value="Value"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+        <div class="col-4">
+            Select Date:
+            <SfDatePicker TValue="DateTime" Format="dd-MM-yyyy" Value="@DateValue">
+                <DatePickerEvents TValue="DateTime" ValueChange="@onChange"></DatePickerEvents>
+            </SfDatePicker>
+        </div>
+    </div>
+
+    <SfGrid DataSource="@NewCustomBOM"></SfGrid>
+
+    <br />
+
+    <div class="row" style="padding:3%">
+        <div class="col-4">
+            Material Type:
+            <SfDropDownList TItem="int" TValue="int" DataSource="@MaterialTypeIDDistinct">
+                <DropDownListFieldSettings Text="MaterialTypeID" Value="MaterialTypeID"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+        <div class="col-4">
+            Material Name:
+            <SfDropDownList TItem="Material" TValue="int" DataSource="@Materials">
+                <DropDownListEvents TValue="int" TItem="Material"></DropDownListEvents>
+                <DropDownListFieldSettings Text="MaterialName" Value="MaterialID"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+        <div class="col-4">
+            Issue To Production: @test
+            <SfNumericTextBox TValue="decimal" Placeholder='Quantity' Max="@totalqty" ShowSpinButton=false></SfNumericTextBox>
+        </div>
+    </div>
+    <SfGrid DataSource="@BOMModels" Width="1400">
+        @*<GridColumns>
+        <GridColumn Field="@nameof(BOM.BOMID)"></GridColumn>
+        <GridForeignColumn Field=@nameof(BOM.FinishedGoodsID) HeaderText="FG Name" ForeignKeyValue="FG_Name" ForeignDataSource="@FinishedGoods"></GridForeignColumn>
+        <GridForeignColumn Field=@nameof(BOM.MaterialID) HeaderText="Material Name" ForeignKeyValue="MaterialName" ForeignDataSource="@Materials"></GridForeignColumn>
+        <GridForeignColumn Field=@nameof(BOM.MaterialTypeID) HeaderText="Material Type Name" ForeignKeyValue="MaterialTypeName" ForeignDataSource="@MaterialTypes"></GridForeignColumn>
+        <GridForeignColumn Field=@nameof(BOM.ProcessPlanID) HeaderText="Process Plan Name" ForeignKeyValue="ProcessPlanName" ForeignDataSource="@ProcessPlans"></GridForeignColumn>
+        <GridColumn Field=@nameof(BOM.Quantity) HeaderText="Quantity"></GridColumn>
+        </GridColumns>*@
+    </SfGrid>
+
+    <br />
+    <br />
+</body>
+
+@code {
+
+    //SqlCommand cmd4 = new SqlCommand("select sum(SubTotal) from DetailedInvoice_" + Session["customerId"].ToString() + " where InvoiceNo=@INo and Fyear=@Fyear1", conn);
+    
+    public int materialid { get; set; }
+    public int materialtypeid { get; set; }
+    public int outquantity { get; set; }
+    public int salesordernumber { get; set; }
+    public int test { get; set; }
+
+    public decimal availablequantity { get; set; }
+    public decimal issuequantity { get; set; }
+    public decimal totalqty { get; set; } = 0;
+    public decimal requiredqty { get; set; } = 0;
+
+    public string issuedto { get; set; }
+    public string sonumber { get; set; }
+    public string receivedfrom { get; set; }
+    public string transactionid { get; set; }
+    public string issuenumber { get; set; }
+    public string fyear { get; set; }
+    public string fyear1 { get; set; }
+    public string sostring { get; set; }
+    public string materialtypeid1 { get; set; }
+    public string materialid1 { get; set; }
+
+    public DateTime DateValue { get; set; } = DateTime.Now;
+
+    public List<GRN> GRNs { get; set; }
+    public List<SelectListItem> SalesOrderNumber { get; set; }
+    public List<SelectListItem> FinishedGoodsDetails { get; set; }
+    public List<DetailedSalesOrder> DetailedSO { get; set; }
+    public List<MaterialType> MaterialTypes { get; set; }
+    public List<BOM> MaterialCustom { get; set; }
+    public List<Material> Materials { get; set; }
+    public List<BOM> BOMs { get; set; }
+    public List<BOM> BOMModels { get; set; }
+    public List<int> MaterialTypeIDDistinct { get; set; }
+    public List<ProcessPlan> ProcessPlans { get; set; }
+    public List<FinishedGoods> FinishedGoods { get; set; }
+    public List<string> NewCustomBOM { get; set; }
+    public List<DataTable> ParentTables { get; set; }
+
+    StoreOut storeout = new StoreOut();
+    ProductionIn productionin = new ProductionIn();
+
+
+    public DataTable table;
+
+    public SfGrid<DataTable> SampleGrid { get; set; }
+
+    //public async void Grid()
+    //{
+    //    NewCustomBOM = await Task.Run(() => bomservice.GetBOMBySO("2/2022-2023"));
+    //}
+
+    protected override async Task OnInitializedAsync()
+    {
+        GRNs = await Task.Run(() => grnservice.GetGRNs());
+        issuenumber = await Task.Run(() => productioninservice.GetIssueNumber(DateValue));
+        SalesOrderNumber = await Task.Run(() => salesorderservice.GetSalesOrderNumber());
+        MaterialTypes = await Task.Run(() => materialtypeservice.GetMaterialTypes());
+        BOMs = await Task.Run(() => bomservice.GetBOMs());
+        ProcessPlans = await Task.Run(() => processplanservice.GetProcessPlans());
+        FinishedGoods = await Task.Run(() => finishedgoodsservice.GetFinishedGoods());
+        Materials = await Task.Run(() => materialservice.GetMaterials());
+        test = await Task.Run(() => bomservice.GetMaterialQty("2/2022-2023"));
+        //BOMModels = await Task.Run(() => bomservice.GetMaterialQty("2/2022-2023"));
+
+
+        table = new DataTable("ParentTable");
+        DataColumn column;
+        DataRow row;
+
+        // Create new DataColumn, set DataType,
+        // ColumnName and add to DataTable.
+        column = new DataColumn();
+        column.DataType = System.Type.GetType("System.Int32");
+        column.ColumnName = "Id";
+        column.ReadOnly = true;
+        column.Unique = true;
+        // Add the Column to the DataColumnCollection.
+        table.Columns.Add(column);
+
+        //SampleGrid
+    }
+
+    protected void onChange(Syncfusion.Blazor.Calendars.ChangedEventArgs<DateTime> args)
+    {
+        DateValue = args.Value;
+        issuenumber = productioninservice.GetIssueNumber(DateValue).Result;
+        fyear = purchaseorderservice.GetFYear(DateValue).Result;
+        StateHasChanged();
+    }
+
+    public void GetSalesDetails(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, SelectListItem> args)
+    {
+
+        //e.g. "2/2022-2023"
+        var id = args.Value.Split("/");    // string[] id = ["2", "2022-2023"]
+        int sonumber = Convert.ToInt32(id[0]);
+        DetailedSO = Task.Run(() => salesorderservice.GetDetailsByID(sonumber, id[1])).Result;
+
+        FinishedGoodsDetails = Task.Run(() => salesorderservice.GetFGID(sonumber, id[1])).Result;
+
+        MaterialTypeIDDistinct = Task.Run(() => bomservice.GetBOMByFG(1)).Result;
+        //MaterialTypeIDDistinct = Task.Run(() => bomservice.GetBOMBySO(args.Value)).Result;
+    }
+
+    public void GetFGDetails(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string, SelectListItem> args)
+    {
+        //e.g. Laptop-1.00-9 (FGname-quantity-fgid)
+        var details = args.Value.Split("-");    // string[] details = ["Laptop", "1.00", "1"]
+        string FGname = details[0];
+        decimal qty = Convert.ToDecimal(details[1]);
+        int fgid = Convert.ToInt32(details[2]);
+
+        //MaterialTypeIDDistinct = Task.Run(() => bomservice.GetBOMByFG(so)).Result;
+
+        MaterialCustom = _context.Tbl_BOM
+                .Where(a => a.FinishedGoodsID == fgid)
+                .ToListAsync().Result;
+
+    }
+
+    public void MakeParentTable()
+    {
+        System.Data.DataTable table = new DataTable("ParentTable");
+        DataColumn column;
+        DataRow row;
+
+        // Create new DataColumn, set DataType,
+        // ColumnName and add to DataTable.
+        column = new DataColumn();
+        column.DataType = System.Type.GetType("System.Int32");
+        column.ColumnName = "Id";
+        column.ReadOnly = true;
+        column.Unique = true;
+        // Add the Column to the DataColumnCollection.
+        table.Columns.Add(column);
+
+        
+    }
+
+    protected async void IssueFromStoreToProduction()
+    {
+        issuedto = "Production";             // change variable values wherever necessary
+        receivedfrom = "Store";              // don't change variable names
+
+        storeout.MaterialID = materialid;
+        storeout.MaterialTypeID = materialtypeid;
+        storeout.OutQuantity = outquantity;
+        storeout.IssuedTo = issuedto;
+        storeout.CreatedBy = "Tanaya";
+        storeout.CreationTime = DateTime.Now;
+
+        await storeoutservice.AddStoreOut(storeout);
+        transactionid = await storeoutservice.GetTransactionID();
+
+        productionin.MaterialID = materialid;
+        productionin.InQuantity = outquantity;
+        productionin.ReceivedFrom = receivedfrom;
+        productionin.ReceivedTransactionID = transactionid;
+        productionin.CreatedBy = "Tanaya";
+        productionin.CreationTime = DateTime.Now;
+
+        await productioninservice.AddProductionIn(productionin);
+
+    }
+
+    public class BOMModel
+    {
+
+    }
+
+    //public Task<List<BOMModel> GetDetails()
+    //{
+    //BOMModels = _context.Tbl_BOM.FromSqlRaw("EXEC dbo.MaterialQtybySO @SONumber = " + sonumber + ", @Fyear =" + fyear).ToList();
+
+    ////BOM[] bom;
+    //// Here "exec Employee" is a stored procedure of SQL Server Database.
+    ////bom = _context.Tbl_BOM.FromSqlRaw(" EXEC dbo.MaterialQtybySO @SONumber = 2, @Fyear = '2022-2023'").ToArray();
+    //return BOMModels;
+    //}
+
+
+    //public void CheckQuantity(Syncfusion.Blazor.Inputs.ChangedEventArgs args)
+    //{
+    //    var a = Convert.ToDecimal(args.Value);
+    //    if (a > totalqty)
+    //    {
+
+    //    }
+    //}
+
+    //public async Task TypeIDChange()
+    //{
+    //    MaterialCustom = await Task.Run(() => materialservice.GetMaterialByTypeID(materialtypeid1));
+    //}
+
+}

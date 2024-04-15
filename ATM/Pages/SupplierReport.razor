@@ -1,0 +1,108 @@
+﻿@page "/SupplierReport"
+
+@using ATM.Models
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Data
+
+@inject SupplierService supplierservice
+@inject SupplierPlantService supplierplantservice
+@inject ATM.Data.ApplicationDbContext _context
+
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head> 
+
+ <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">Supplier Report</h4>
+    </div><br />
+
+<div style="margin-left:auto; margin-right:auto;">
+
+<SfGrid DataSource="@Suppliers"  AllowFiltering="true" AllowGrouping="true" AllowSorting="true" >
+     <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+    </GridEditSettings>
+ <GridTemplates>
+        <DetailTemplate>
+            @{
+                var supplier = (context as Supplier);
+                      <SfGrid TValue="SupplierPlant" Query="@GetPlantQuery(supplier)" DataSource="@SupplierPlants" Width="auto">
+                              <GridColumns>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantName) HeaderText="Plant Name" Width="auto"></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantAddress) HeaderText="Plant Address" Width="auto"></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantCity) Width="auto" HeaderText="city"></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantState) Width="auto" HeaderText="State"></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantPincode) Width="auto" HeaderText="Pincode"></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantEmailID) HeaderText="Email ID" Width="auto"></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantOpeningBalance) Width="auto" HeaderText="Opening Balance"></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantGSTNo) Width="auto" HeaderText="GST No."></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierplantPANNo) Width="auto" HeaderText="PAN No."></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantContactPersonName) HeaderText="Contact Person Name" Width="auto"></GridColumn>
+                              <GridColumn Field=@nameof(SupplierPlant.SupplierPlantContactNumber) HeaderText="Contact Number" Width="auto"></GridColumn>
+                              </GridColumns>
+                      </SfGrid>
+            }
+        </DetailTemplate>
+    </GridTemplates>
+    <GridColumns>
+         <GridColumn Field=@nameof(Supplier.SupplierName) HeaderText="Supplier Name" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.City) HeaderText="City" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.State) HeaderText="State" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.Address) HeaderText="Address" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.PINCode) HeaderText="PIN Code" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.PANNo) HeaderText="PAN No." Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.GSTNo) HeaderText="GST No." Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.SupplierEmailID) HeaderText="Email ID" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.PrimaryContactPersonName) HeaderText="Contact Person Name" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.PrimaryContactPersonContact) HeaderText="Contact Number" Width="165"> </GridColumn>
+            <GridColumn Field=@nameof(Supplier.OpeningBalance) HeaderText="Opening Balance" Width="165"> </GridColumn>
+    </GridColumns>
+</SfGrid>
+
+</div>
+<style>
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+</style>
+@code {
+
+    public List<Supplier> Suppliers { get; set; }
+    public List<SupplierPlant> SupplierPlants { get; set; }
+    SfGrid<Supplier> SupplierGrid { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Suppliers = await Task.Run(() => supplierservice.GetSuppliers());
+        SupplierPlants = await Task.Run(() => supplierplantservice.GetSupplierPlants());
+    }
+     public Query GetPlantQuery(Supplier supplier)
+    {
+        return new Query().Where("SupplierID", "equal", supplier.SupplierID);
+    }
+    public async void ActionBeginHandler(ActionEventArgs<SupplierPlant> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await supplierplantservice.AddSupplierPlant(Args.Data);
+                SupplierPlants = (await supplierplantservice.GetSupplierPlants()).ToList();
+            }
+            else
+            {
+                await supplierplantservice.UpdateSupplierPlant(Args.Data);
+                SupplierPlants = (await supplierplantservice.GetSupplierPlants()).ToList();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await supplierplantservice.DeleteSupplierPlant(Args.Data.SupplierPlantID);
+        }
+    }
+
+}

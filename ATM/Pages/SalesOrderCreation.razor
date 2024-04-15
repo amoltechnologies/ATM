@@ -1,0 +1,475 @@
+﻿@page "/SalesOrderCreation"
+
+@using ATM.Models;
+@using ATM.Data;
+@using Microsoft.EntityFrameworkCore;
+
+@inject ATM.Data.ApplicationDbContext _context
+@inject SalesOrderService salesorderservice
+@inject MaterialTypeService materialtypeservice
+@inject MaterialCategoryService materialcategoryservice
+@inject MaterialSubCategoryService materialsubcategoryservice
+@inject CustomerService customerservice
+@inject MaterialService materialservice
+@inject UnitService unitservice
+@inject FinishedGoodsService finishedgoodsservice
+
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head>
+
+<body style="font-family: Montserrat; font-weight:600">
+
+    <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; padding-right:1%; padding-top:1%;font-weight:600; color:white; font-size:17px">Let's create Sales Order</h4>
+    </div><br /><br />
+
+    <div class="row margin" >
+        <div class="col-3 margin">
+            Sales Order No
+            <SfTextBox CssClass="e-input-group" ID="so" Value="@so" Readonly=true style="background-color: white"></SfTextBox>
+        </div>
+        <div class="col-3 margin">
+             Customer Name
+            <SfDropDownList ID="CustomerName" TValue="int" TItem="Customer" DataSource="@Customers" @bind-Value="CustomerID" >
+                <DropDownListFieldSettings Value="CustomerID" Text="CustomerName"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
+        <div class="col-3 margin">
+            Date of Sales Order
+            <SfDatePicker TValue="DateTime" Format="dd-MM-yyyy" Value="@DateValue">
+                <DatePickerEvents TValue="DateTime" ValueChange="@onChange"></DatePickerEvents>
+            </SfDatePicker>
+        </div>
+
+    </div>
+
+   <br><br />
+
+
+    <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; padding-right:1%; padding-top:1%; font-weight:600; color:white; font-size:17px">Add Item</h4>
+    </div><br /><br />
+
+     <EditForm Model="@tempso" OnValidSubmit="@AddItem">
+
+         
+            <div class="row">
+
+                <div class="col-3 margin">
+                    Finished Goods Name
+                    <SfDropDownList ID="FG_name" TValue="int" TItem="FinishedGoods" @bind-Value="FG_ID"
+                                     DataSource="@FinishedGood">
+                        <DropDownListFieldSettings Value="FinishedGoodsID" Text="FG_Name"></DropDownListFieldSettings>
+                        <DropDownListEvents TValue="int" TItem="FinishedGoods" ValueChange="FGIDChange"></DropDownListEvents>
+                    </SfDropDownList>
+                </div>
+
+                <div class="col-3 margin">
+                   Product Description
+                    <SfTextBox Readonly=true @bind-Value="@desc"></SfTextBox>
+                </div>
+
+                <div class="col-3 margin">
+                    Unit
+                     <SfTextBox Readonly=true @bind-Value="@UnitName"></SfTextBox>
+                </div>
+
+            </div>
+
+            <br />
+
+
+            <div class="row">
+
+                <div class="col-3 margin">
+                     Quantity
+                    <SfNumericTextBox ShowSpinButton="false" @bind-Value="@tempso.Quantity" OnChange="CalculateAmount"></SfNumericTextBox>
+                </div>
+
+                <div class="col-3 margin">
+                     Base Amount
+                    <SfNumericTextBox ShowSpinButton=false @bind-Value="@tempso.BaseAmount" OnChange="CalculateAmount"></SfNumericTextBox>
+                </div>
+
+                <div class="col-3 margin">
+                     Discount
+                    <SfNumericTextBox ShowSpinButton=false @bind-Value="@tempso.DiscountPercent" Max="100" Min="0"
+                                      OnChange="CalculateAmount"></SfNumericTextBox>
+                </div>
+
+            </div>
+
+            <br />
+
+            <div class="row">
+
+                <div class="col-3 margin">
+                    HSN Code
+                    <SfTextBox Readonly=true @bind-Value="@HSNCode" style="background-color: white"></SfTextBox>
+                </div>
+
+                <div class="col-3 margin">
+                    GST Percent
+                    <SfNumericTextBox ShowSpinButton=false Readonly=true @bind-Value="@GSTPercent" style="background-color: white"></SfNumericTextBox>
+                </div>
+                <div class="col-3 margin">
+                    GST Amount:
+                    <SfNumericTextBox ShowSpinButton=false Readonly=true @bind-Value="@GSTAmount" style="background-color: white"></SfNumericTextBox>
+                </div>
+            </div>
+
+            <br />
+
+            <div class="row">
+
+                <div class="col-3 margin">
+                     Subtotal:
+                    <SfNumericTextBox ShowSpinButton=false Readonly=true @bind-Value="@SubTotal"></SfNumericTextBox>
+                </div>
+
+                <div class="col-3 margin">
+
+                </div>
+                <div class="col-3 margin">
+
+                </div>
+
+            </div>
+
+            <br />
+
+            <div class="row">
+                <div class="col-12" style="text-align:center">
+
+
+                <button  class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; font-weight:600;  color:aliceblue; margin-bottom:40px;" type="submit">
+                 Add Item</button>
+                </div>
+            </div>
+
+    </EditForm>
+
+     <br />
+        <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; padding-right:1%; padding-top:1%;font-weight:600;  color:white; font-size:17px">Item Summary</h4>
+    </div><br />
+
+    <div style="margin-left:auto; margin-right:auto; align-content:center">
+        <SfGrid DataSource="@TemperorySalesOrders" ID="TempGrid"  Width="auto">
+            <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true">
+            </GridEditSettings>
+            <GridPageSettings PageSize="5"></GridPageSettings>
+            <GridEvents  TValue="TemperorySalesOrder"></GridEvents>
+            <GridColumns>
+                <GridColumn Field="@nameof(TemperorySalesOrder.FG_Name)" Width="180" HeaderText="Finished Goods Name" AllowFiltering="true"></GridColumn>
+                <GridForeignColumn Field="@nameof(TemperorySalesOrder.MaterialTypeID)" HeaderText="Material Type" ForeignDataSource="MaterialTypes" ForeignKeyValue="MaterialTypeName"> </GridForeignColumn>
+
+@*              <GridColumn Field="@nameof(TemperorySalesOrder.MaterialTypeID)" Width="180" HeaderText="Material Type ID" AllowFiltering="true"></GridColumn>*@                
+                <GridColumn Field="@nameof(TemperorySalesOrder.BaseAmount)" Width="180" HeaderText="Base Amount" AllowFiltering="true"></GridColumn>
+                <GridColumn Field="@nameof(TemperorySalesOrder.Quantity)" Width="180" HeaderText="Quantity" AllowFiltering="true"></GridColumn>
+                <GridColumn Field="@nameof(TemperorySalesOrder.Amount)" Width="180" AllowEditing=false HeaderText="Amount" AllowFiltering="true"></GridColumn>
+                <GridColumn Field="@nameof(TemperorySalesOrder.DiscountPercent)" Width="180" HeaderText="Discount Percent" AllowFiltering="true"></GridColumn>
+                <GridColumn Field="@nameof(TemperorySalesOrder.IGSTPercent)" Width="180" AllowEditing=false HeaderText="GST Percent" AllowFiltering="true"></GridColumn>
+                <GridColumn Field="@nameof(TemperorySalesOrder.IGSTAmount)" Width="180" AllowEditing=false HeaderText="GST Amount" AllowFiltering="true"></GridColumn>
+                <GridColumn Field="@nameof(TemperorySalesOrder.SubTotal)" Width="180" AllowEditing=false HeaderText="Subtotal" AllowFiltering="true"></GridColumn>
+            </GridColumns>
+        </SfGrid>
+    </div>
+
+    <br /><br />
+
+     <div class="row">
+        <div class="col-12" style="text-align:center">
+            <button  class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; font-weight:600; color:aliceblue; margin-bottom:40px;" @onclick="SaveItem">
+                 Save Sales Order</button>
+        </div>
+    </div>
+
+</body>
+
+<style>
+    .margin{
+        margin-left:auto;
+        margin-right:auto;
+    }
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+</style>
+
+@code {
+
+    public int CustomerID { get; set; }
+    public string so = null!;
+    public string Fyear { get; set; } = null!;
+    public int FGID { get; set; }
+    public int FG_ID { get; set; }
+
+    public string desc { get; set; } = null!;
+    public string Fg_name { get; set; } = null!;
+    public string HSNCode { get; set; } = null!;
+    public decimal GSTPercent { get; set; }
+    public decimal Amount { get; set; }
+    public decimal AmountAfterDiscount { get; set; }
+    public decimal GSTAmount { get; set; }
+    public decimal SubTotal { get; set; }
+    public string UnitName { get; set; } = null!;
+    public int UserID { get; set; } = 1;
+
+    public decimal TotalGSTPercent { get; set; }
+    public decimal TotalGSTAmount { get; set; }
+    public decimal TotalDiscountPercent { get; set; }
+    public decimal TotalDiscountAmount { get; set; }
+    public decimal TotalAmount { get; set; }
+
+
+    public List<SalesOrder> SalesOrders { get; set; } = null!;
+    public List<TemperorySalesOrder> TemperorySalesOrders { get; set; } = null!;
+    public List<DetailedSalesOrder> DetailedSalesOrders { get; set; } = null!;
+    public List<SalesOrder> SOCustom { get; set; } = null!;
+    public List<FinishedGoods> FinishedGood { get; set; } = null!;
+    public List<MaterialType> MaterialTypes { get; set; } = null!;
+    public List<Customer> Customers { get; set; } = null!;
+    public List<Material> Materials { get; set; } = null!;
+    public List<Material> MaterialCustom { get; set; } = null!;
+    public List<Material> MaterialCustomd { get; set; } = null!;
+    public List<MaterialCategory> MaterialCategories { get; set; } = null!;
+    public List<MaterialSubCategory> MaterialSubCategories { get; set; } = null!;
+    public List<Material> MaterialDetails { get; set; } = null!;
+    public List<Unit> Units { get; set; } = null!;
+    public List<IQueryable> MaterialTypeCustom { get; set; } = null!;
+
+    public DateTime DateValue { get; set; } = DateTime.Now;
+    public DateTime DateofQuotation { get; set; } = DateTime.Now;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SalesOrders = await Task.Run(() => salesorderservice.GetSalesOrders());
+        TemperorySalesOrders = await Task.Run(() => salesorderservice.GetTemperorySalesOrder());
+        MaterialTypes = await Task.Run(() => materialtypeservice.GetMaterialTypes());
+        FinishedGood = await Task.Run(() => finishedgoodsservice.GetFinishedGoods());
+        Customers = await Task.Run(() => customerservice.GetCustomers());
+        Materials = await Task.Run(() => materialservice.GetMaterials());
+        Units = await Task.Run(() => unitservice.GetUnits());
+        MaterialCategories = await Task.Run(() => materialcategoryservice.GetMaterialCategories());
+        MaterialSubCategories = await Task.Run(() => materialsubcategoryservice.GetMaterialSubCategories());
+        //MaterialDetails = GetMaterialDetails().ToList();
+        //MaterialSubCategories = GetMaterialDetails();
+        MaterialDetails = await Task.Run(() => materialservice.GetMaterials());
+        //MaterialTypeCustom = await Task.Run(() => materialservice.GetCustomTypeID());
+        so = await Task.Run(() => salesorderservice.GetSalesOrderNumber(DateValue));
+        Fyear = await Task.Run(() => salesorderservice.GetFYear(DateValue));
+        //MaterialTypeCustom = Materials.DistinctBy(type => type.MaterialTypeID).ToList();
+    }
+
+    protected async void onChange(Syncfusion.Blazor.Calendars.ChangedEventArgs<DateTime> args)
+    {
+        DateValue = args.Value;
+        so = salesorderservice.GetSalesOrderNumber(DateValue).Result;
+        Fyear = await Task.Run(() => salesorderservice.GetFYear(DateValue));
+        StateHasChanged();
+    }
+
+    public void FGIDChange(Syncfusion.Blazor.DropDowns.ChangeEventArgs<int, FinishedGoods> args)
+    {
+        FGID = args.Value;
+        var id = Convert.ToInt32(FGID);
+        FinishedGoods fg = _context.Tbl_FinishedGoods.Find(id);
+
+        Fg_name = fg.FG_Name;
+        desc = fg.Description;
+        HSNCode = fg.HSNCode;
+        GSTPercent = fg.GSTPercent;
+        UnitName = fg.UnitName;
+    }
+
+
+    public void CalculateAmount()
+    {
+        Amount = tempso.BaseAmount * tempso.Quantity;
+        AmountAfterDiscount = Amount - Amount * tempso.DiscountPercent / 100;
+        GSTAmount = AmountAfterDiscount * GSTPercent / 100;
+        SubTotal = AmountAfterDiscount + GSTAmount;
+    }
+
+    SalesOrder salesorder = new SalesOrder();
+    TemperorySalesOrder tempso = new TemperorySalesOrder();
+    DetailedSalesOrder detailedsalesorder = new DetailedSalesOrder();
+    Material material = new Material();
+
+
+    public async void AddItem()
+    {
+        tempso.Description = desc;
+        tempso.HSNCode = HSNCode;
+        tempso.IGSTPercent = GSTPercent;
+        tempso.IGSTAmount = GSTAmount;
+        tempso.SubTotal = SubTotal;
+        tempso.Amount = Amount;
+        tempso.Fyear = Fyear;
+        tempso.FinishedGoodsID = Convert.ToInt32(FGID);
+        tempso.FG_Name = Fg_name;
+        tempso.UnitName = UnitName;
+        tempso.UserId = UserID;
+        tempso.MaterialTypeID = 9;
+        tempso.CreatedBy = "Apurva";
+        tempso.ModificationTime = DateTime.Now;
+        tempso.ModifiedBy = " ";
+
+
+        try
+        {
+
+            await salesorderservice.AddTemperorySalesOrder(tempso);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+
+        tempso = new TemperorySalesOrder();
+        TemperorySalesOrders = await Task.Run(() => salesorderservice.GetTemperorySalesOrder());
+        base.StateHasChanged();
+
+    }
+
+    public async void SaveItem()
+    {
+         so = await Task.Run(() => salesorderservice.GetSalesOrderNumber(DateValue));
+        ////// Calculate Total Amount
+
+        foreach (var material in TemperorySalesOrders)
+        {
+            TotalGSTPercent = TotalGSTPercent + material.IGSTPercent;
+            TotalGSTAmount = TotalGSTAmount + material.IGSTAmount;
+            TotalDiscountPercent = TotalDiscountPercent + material.DiscountPercent;
+            TotalAmount = TotalAmount + material.Amount;
+        }
+
+        //////
+
+        TotalDiscountAmount = TotalAmount - TotalAmount * TotalDiscountPercent / 100;
+
+        //salesorder.DateOfQuotation = DateofQuotation;
+        salesorder.CustomerID = CustomerID;
+
+        salesorder.Fyear = Fyear;
+        salesorder.DateOfSalesOrder = DateValue;
+        salesorder.TotalGSTAmount = TotalGSTAmount;
+        //salesorder.TotalDiscountAmount = TotalDiscountAmount;
+        salesorder.TotalAmount = TotalAmount;
+        salesorder.UserId = UserID;
+
+        salesorder.CreatedBy = "1";
+        salesorder.CreationTime = DateTime.Now;
+        salesorder.ModifiedBy = "1";
+        salesorder.ModificationTime = DateTime.Now;
+
+
+        try
+        {
+            await salesorderservice.AddSalesOrder(salesorder);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+
+
+        foreach (var item in TemperorySalesOrders)
+        {
+
+            detailedsalesorder.SalesOrderNumber = salesorder.SalesOrderNumber;
+            detailedsalesorder.SrNo = item.SrNo;
+            //detailedsalesorder.MaterialID = item.MaterialID;
+            detailedsalesorder.FinishedGoodsID = item.FinishedGoodsID;
+            detailedsalesorder.FG_Name = item.FG_Name;
+            detailedsalesorder.MaterialTypeID = item.MaterialTypeID;
+            //detailedsalesorder.MaterialName = item.MaterialName;
+            detailedsalesorder.Fyear = item.Fyear;
+            detailedsalesorder.GRNQuantity = 10;
+            detailedsalesorder.Description = item.Description;
+            detailedsalesorder.HSNCode = item.HSNCode;
+            detailedsalesorder.BaseAmount = item.BaseAmount;
+            detailedsalesorder.Quantity = item.Quantity;
+            detailedsalesorder.Amount = item.Amount;
+            detailedsalesorder.UnitName = item.UnitName;
+            detailedsalesorder.DiscountPercent = item.DiscountPercent;
+            detailedsalesorder.SGSTPercent = item.SGSTPercent;
+            detailedsalesorder.SGSTAmount = item.SGSTAmount;
+            detailedsalesorder.CGSTPercent = item.CGSTPercent;
+            detailedsalesorder.CGSTAmount = item.CGSTAmount;
+            detailedsalesorder.IGSTPercent = item.IGSTPercent;
+            detailedsalesorder.IGSTAmount = item.IGSTAmount;
+            detailedsalesorder.SubTotal = item.SubTotal;
+            detailedsalesorder.UserId = item.UserId;
+            detailedsalesorder.CreatedBy = "1";
+            detailedsalesorder.ModifiedBy = "1";
+            detailedsalesorder.CreationTime = DateTime.Now;
+            detailedsalesorder.ModificationTime = DateTime.Now;
+
+
+            try
+            {
+                await salesorderservice.AddDetailedSalesOrder(detailedsalesorder);
+
+            }
+            catch
+            {
+                base.StateHasChanged();
+            }
+
+
+            detailedsalesorder = new DetailedSalesOrder();
+
+        }
+        
+
+        salesorder = new SalesOrder();
+        base.StateHasChanged();
+
+        detailedsalesorder = new DetailedSalesOrder();
+        base.StateHasChanged();
+
+
+        _context.Database.ExecuteSqlRaw("Truncate table Tbl_TemperorySalesOrder");
+        await _context.SaveChangesAsync();
+        base.StateHasChanged();
+        TemperorySalesOrders = await Task.Run(() => salesorderservice.GetTemperorySalesOrder());
+         await _context.SaveChangesAsync();
+        base.StateHasChanged(); 
+    }
+
+
+     public async void ActionBeginHandler(ActionEventArgs<TemperorySalesOrder> Args)
+    {
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            if (Args.Action == "Add")
+            {
+                await salesorderservice.AddTemperorySalesOrder(Args.Data);
+                TemperorySalesOrders = (await salesorderservice.GetTemperorySalesOrder()).ToList();
+                base.StateHasChanged();
+            }
+            else
+            {
+                await salesorderservice.UpdateTemperorySalesOrder(Args.Data);
+                TemperorySalesOrders = (await salesorderservice.GetTemperorySalesOrder()).ToList();
+                base.StateHasChanged();
+            }
+        }
+        if (Args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            await salesorderservice.DeleteTemperorySalesOrder(Args.Data.SrNo);
+            base.StateHasChanged();
+        }
+    }
+}

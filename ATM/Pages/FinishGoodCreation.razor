@@ -1,0 +1,276 @@
+﻿@page "/FG_Creation"
+
+
+@inject FinishedGoodsService finishgoodsservice
+@inject UnitService unitservice
+@inject ATM.Data.ApplicationDbContext _context
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Cards
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using ATM.Models
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head> 
+
+    <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">  Lets Create A Finished Goods</h4>
+    </div><br />
+<EditForm Model=@finishedgoods OnValidSubmit=@HandleValidSubmit>
+        <DataAnnotationsValidator />
+        <FluentValidationValidator TValidator="FinishedGoodFluentvalidation" />
+
+
+    <div class="row">
+         <div class=" margin col-md-3 col-lg-3;  ">
+            <br />
+            Finished Goods Name
+            <SfTextBox ID="FinishedGoodsName"  @bind-Value="finishedgoods.FG_Name"></SfTextBox>
+             <br />
+       
+        </div>
+        <div class=" margin col-md-3 col-lg-3;  ">
+            <br />
+            Internal Finished Goods Name
+            <SfTextBox ID="InternalName"  @bind-Value="finishedgoods.InternalFG_Name"></SfTextBox>
+             <br />
+       
+        </div>
+         <div class=" margin col-md-3 col-lg-3;  ">
+            <br />
+            Finished Goods Unit
+             <SfDropDownList TValue="string" TItem="Unit" @bind-Value="f_unit" DataSource="@Units">
+                <DropDownListFieldSettings Value="UnitName"></DropDownListFieldSettings>
+                 <DropDownListEvents TValue="string" TItem="Unit" ValueChange="showMaterialType"></DropDownListEvents>
+             </SfDropDownList>
+
+                
+             <br />
+       
+        </div>
+        
+     </div>
+
+     <div class="row">
+         <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => finishedgoods.FG_Name)" ></ValidationMessage>
+       
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => finishedgoods.InternalFG_Name)" ></ValidationMessage>
+          
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => finishedgoods.UnitName)" ></ValidationMessage>
+     
+         </div>
+     </div>
+     
+     <div class="row">
+           <div class="margin col-md-3 col-lg-3" >
+             <br />
+         HSN Code
+         <SfDropDownList TValue="string" TItem="Unit" @bind-Value="hsn_code" DataSource="@Units">
+                <DropDownListFieldSettings  Value="UnitName"></DropDownListFieldSettings>
+                 <DropDownListEvents TValue="string" TItem="Unit" ValueChange="showMaterialType"></DropDownListEvents>
+             </SfDropDownList>
+
+        <br />
+         </div>
+         <div class="margin col-md-3 col-lg-3 col-sm-3; ">
+             <br />
+         GST Percent
+             <SfDropDownList TValue="string" TItem="GST" @bind-Value="gst_code" DataSource="@Val">
+                <DropDownListFieldSettings Value="Value"></DropDownListFieldSettings>
+                 <DropDownListEvents TValue="string" TItem="GST" ValueChange="showMaterialType"></DropDownListEvents>
+              </SfDropDownList>
+             <br />
+         </div>
+             <div class=" margin col-md-3 col-lg-3 col-sm-3;  ">
+            <br />
+             Description
+            <SfTextBox Multiline="true" ID="Description"  @bind-Value="finishedgoods.Description"></SfTextBox>
+             <br />
+            </div>
+       
+     </div>
+        <div class="row">
+         <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => finishedgoods.HSNCode)" ></ValidationMessage>
+       
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => finishedgoods.GSTPercent)" ></ValidationMessage>
+          
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => finishedgoods.Description)" ></ValidationMessage>
+     
+         </div>
+     </div>
+     <div class="row">
+        <div class="margin col-md-3 col-lg-3 col-sm-3;  ">
+             <br />
+             Per Unit Price
+                <SfNumericTextBox TValue="decimal"  @bind-Value="finishedgoods.PerUnitPrice"></SfNumericTextBox>
+             <br />
+            </div>
+        <div class="margin col-md-3 col-lg-3 col-sm-3;  ">
+             <br />
+            Internal Drawing
+            @* <SfUploader @ref="UploadObj" AutoUpload="SetAutoUpload" SequentialUpload="SetSequentialUpload">
+                <UploaderEvents OnRemove="OnFileRemove"></UploaderEvents>
+                <UploaderAsyncSettings SaveUrl="https://aspnetmvc.syncfusion.com/services/api/uploadbox/Save" RemoveUrl="https://aspnetmvc.syncfusion.com/services/api/uploadbox/Remove"></UploaderAsyncSettings>
+            </SfUploader>*@
+            <SfTextBox @bind-Value="finishedgoods.InternalDrawing"></SfTextBox>
+
+            <br />
+            </div>
+             @code {
+                SfUploader UploadObj;
+                private bool SetAutoUpload { get; set; } = false;
+                private bool SetSequentialUpload { get; set; } = false;
+                public void OnFileRemove(RemovingEventArgs args)
+                {
+                    args.PostRawFile = false;
+                }
+                public void OnAutoChange(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool> args)
+                {
+                    this.UploadObj.ClearAllAsync();
+                    this.SetAutoUpload = args.Checked;
+                }
+                public void OnSequentialChange(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool> args)
+                {
+                    this.UploadObj.ClearAllAsync();
+                    this.SetSequentialUpload = args.Checked;
+                }
+            }
+
+
+            <div class="margin col-md-3 col-lg-3 col-sm-3;  ">
+             <br />
+            Customer Drawing
+              @*<SfUploader @ref="UploadObj" AutoUpload="SetAutoUpload" SequentialUpload="SetSequentialUpload">
+                <UploaderEvents OnRemove="OnFileRemove"></UploaderEvents>
+                <UploaderAsyncSettings SaveUrl="https://aspnetmvc.syncfusion.com/services/api/uploadbox/Save" RemoveUrl="https://aspnetmvc.syncfusion.com/services/api/uploadbox/Remove"></UploaderAsyncSettings>
+                </SfUploader>*@
+                <SfTextBox @bind-Value="finishedgoods.CustomerDrawing"></SfTextBox>
+             <br />
+            </div>
+     </div>
+        <div class="row">
+         <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => finishedgoods.PerUnitPrice)" ></ValidationMessage>
+       
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => finishedgoods.InternalDrawing)" ></ValidationMessage>
+          
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => finishedgoods.CustomerDrawing)" ></ValidationMessage>
+     
+         </div>
+     </div>
+     <div class="row">
+         <div class="margin col-md-3 col-lg-3 col-sm-3; ">
+             <br />
+             Opening Quantity
+             <SfNumericTextBox TValue="decimal" ></SfNumericTextBox>
+         </div>
+         <div class="margin col-md-3 col-lg-3 col-sm-3; ">
+             <br />
+             Buffer Level Quantity
+             <SfNumericTextBox TValue="decimal" @bind-Value="finishedgoods.FGBufferLevelQuantity"></SfNumericTextBox>
+         </div>
+        <div class="margin col-md-3 col-lg-3 col-sm-3; "> </div>
+
+       </div>
+      <div class="row">
+             <div class=" margin col-md-3 col-lg-3 col-sm-3;  ">
+            <br /></div>
+            <div class="margin col-md-3 col-lg-3 col-sm-3;  " style="text-align:center">
+             <br /><br />
+            <button class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; font-weight:600; border-radius:10px; color:aliceblue; margin-bottom:40px;" type="submit">
+                Create Finished Goods</button>
+            </div>
+            <div class="margin col-md-3 col-lg-3 col-sm-3; ">
+             <br /></div>
+     </div>
+
+
+  </EditForm>
+
+
+@code {
+    public List<FinishedGoods> finishedgood { get; set; }
+    public List<Unit> Units { get; set; }
+    public string f_unit { get; set; }
+    public string hsn_code { get; set; }
+    public string gst_code { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        finishedgood = await Task.Run(() => finishgoodsservice.GetFinishedGoods());
+        Units = await Task.Run(() => unitservice.GetUnits());
+    }
+
+    FinishedGoods finishedgoods = new FinishedGoods();
+    Unit unit = new Unit();
+
+    protected async Task showMaterialType()
+    {
+
+        finishedgoods.HSNCode = hsn_code;
+        finishedgoods.GSTPercent =Convert.ToDecimal(gst_code) ;
+        finishedgoods.UnitName = f_unit;
+
+    }
+
+    private async void HandleValidSubmit()
+    {
+        finishedgoods.CreatedBy="a";
+        finishedgoods.CreationTime = DateTime.Now;
+        try
+        {
+            await finishgoodsservice.AddFinishedGoods(finishedgoods);
+            await _context.SaveChangesAsync();
+            
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+        finishedgoods = new FinishedGoods();
+        base.StateHasChanged(); 
+        unit = new Unit();
+        base.StateHasChanged();
+    }
+}
+@code {
+    public class GST
+    {
+        public int Value { get; set; }
+
+       
+    }
+    List<GST> Val = new List<GST>
+    {
+        new GST() { Value = 0},
+        new GST() { Value = 5},
+        new GST() { Value = 12},
+        new GST() { Value = 18},
+    };
+}
+
+<style>
+    .margin{
+        margin-left:auto;
+        margin-right:auto;
+       
+    }
+   
+</style>

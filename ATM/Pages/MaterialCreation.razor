@@ -1,0 +1,501 @@
+﻿@page "/MaterialCreation"
+
+@inject MaterialTypeService materialtypeservice
+@inject UnitService unitservice
+@inject MaterialCategoryService materialcategoryservice
+@inject MaterialSubCategoryService materialsubcategoryservice
+@inject MaterialService materialservice
+
+@inject ATM.Data.ApplicationDbContext _context
+@inject ATM.Data.ApplicationDbContext dbcontext
+@inject ATM.Data.ApplicationDbContext context
+
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Cards
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using ATM.Models
+
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head> 
+
+    <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">  Lets Create A Material</h4>
+    </div><br />
+
+
+   <div class="row">
+    <div class=" margin col-md-3 col-lg-3;  ">
+        <div class="row"></div>
+
+        <br />
+        Material Type<br />
+        <SfDropDownList TValue="int" ID="Materialtype" TItem="MaterialType" @bind-Value="material_type" DataSource="@materialtypes">
+            <DropDownListFieldSettings Value="MaterialTypeID" Text="MaterialTypeName"></DropDownListFieldSettings>
+            <DropDownListEvents TValue="int" TItem="MaterialType" ValueChange="showMaterialType"></DropDownListEvents>
+        </SfDropDownList>
+
+        <br />
+
+    </div>
+    <div class=" margin col-md-3 col-lg-3;  ">
+
+        <br />
+
+
+        <label>Material Category  </label>   <br />
+        <SfDropDownList TValue="int" TItem="MaterialCategory" @bind-Value="material_category" DataSource="@MaterialCatCustom">
+            <DropDownListFieldSettings Value="MaterialCategoryID" Text="MaterialCategoryName"></DropDownListFieldSettings>
+            <DropDownListEvents TValue="int" TItem="MaterialCategory" ValueChange="showMaterialType"></DropDownListEvents>
+
+        </SfDropDownList>
+
+        <SfButton style="size:10px; position:absolute " Class="e-round shadow btn-outline-dark" IconCss="e-icons e-plus-icon" IsPrimary="true" @onclick="@OpenDialog"></SfButton>
+
+        <SfDialog class="margin" Target="#target" Width="250px" AllowDragging="true" IsModal="true" ShowCloseIcon="true" @bind-Visible="@IsVisible">
+            <DialogTemplates>
+                <Header>Create Category</Header>
+                <Content>
+                    <div class-margin>
+                        <div class="row">
+                            <br />
+                            Material Type
+                            <SfDropDownList TValue="int" ID="Materialtype" TItem="MaterialType" @bind-Value="material_type_cat" DataSource="@materialtypes">
+                                <DropDownListFieldSettings Value="MaterialTypeID" Text="MaterialTypeName"></DropDownListFieldSettings>
+                                <DropDownListEvents TValue="int" TItem="MaterialType" ValueChange="showcat" OnValueSelect="showcat"></DropDownListEvents>
+                            </SfDropDownList>
+                        </div>
+                        <div class="row">
+                            <br />
+                            Category Name
+                            <SfTextBox ID="MaterialCategory" @bind-Value="materialcategory.MaterialCategoryName"></SfTextBox>
+                        </div>
+                    </div>
+                </Content>
+            </DialogTemplates>
+            <DialogButtons>
+                <DialogButton style="background-color:blueviolet; border-radius:10px;" Content="Create" IsPrimary="true" OnClick="CreateCategory" />
+
+            </DialogButtons>
+        </SfDialog>
+
+
+        <br />
+
+    </div>
+    <div class=" margin col-md-3 col-lg-3;  ">
+
+        <br />
+        Material Sub Category<br />
+        <SfDropDownList TValue="int" TItem="MaterialSubCategory" @bind-Value="material_subcategory" DataSource="@MaterialSubCatCustom">
+            <DropDownListFieldSettings Value="MaterialSubCategoryID" Text="MaterialSubCategoryName"></DropDownListFieldSettings>
+            <DropDownListEvents TValue="int" TItem="MaterialSubCategory" ValueChange="showMaterialType" OnValueSelect="showMaterialType"></DropDownListEvents>
+
+        </SfDropDownList>
+
+        <SfButton style=" position:absolute" Class="e-round  btn-outline-dark shadow-lg" IconCss="e-icons e-plus-icon" IsPrimary="true" @onclick="@OpenDialog1"></SfButton>
+
+        <SfDialog Target="#target" Width="250px" AllowDragging="true" IsModal="true" ShowCloseIcon="true" @bind-Visible="@IsVisible1">
+            <DialogTemplates>
+                <Header>Create Sub Category </Header>
+                <Content>
+                    <div>
+                        <div class="row">
+                            <br />
+                            @*   Material Type
+                            <SfDropDownList  TValue="int" ID="Materialtype" TItem="MaterialType" @bind-Value="material_type" DataSource="@materialtypes">
+                            <DropDownListFieldSettings Value="MaterialTypeID" Text="MaterialTypeName"></DropDownListFieldSettings>
+                            <DropDownListEvents TValue="int" TItem="MaterialType" OnValueSelect="showMaterialType" ValueChange="showMaterialType"></DropDownListEvents>
+                            </SfDropDownList>*@
+                        </div>
+                        <div class="row">
+                            <br />
+                            Material Category
+
+                            <SfDropDownList TValue="int" TItem="MaterialCategory" @bind-Value="material_cat_subcat" DataSource="@materialcategorys">
+                                <DropDownListFieldSettings Value="MaterialCategoryID" Text="MaterialCategoryName"></DropDownListFieldSettings>
+                                <DropDownListEvents TValue="int" TItem="MaterialCategory" ValueChange="showsubcat" OnValueSelect="showsubcat"></DropDownListEvents>
+                            </SfDropDownList>
+                        </div>
+                        <div class="row">
+                            <br />Sub Category Name
+                            <SfTextBox ID="Material Sub Category" @bind-Value="materialsubcategory.MaterialSubCategoryName"></SfTextBox>
+                        </div>
+                    </div>
+                </Content>
+            </DialogTemplates>
+            <DialogButtons>
+                <DialogButton style="background-color:blueviolet; border-radius:10px;" Content="Create" IsPrimary="true" OnClick="CreateSubCategory" />
+
+            </DialogButtons>
+        </SfDialog>
+
+        <br />
+
+    </div>
+</div>
+<div class="row">
+    @*<div class=" margin col-md-3">
+    <ValidationMessage For="@(() => materialtype.MaterialTypeName)" ></ValidationMessage>
+
+    </div>
+    <div class=" margin col-md-3">
+    <ValidationMessage For="@(() => materialcategory.MaterialCategoryName)" ></ValidationMessage>
+
+    </div>
+    <div class=" margin col-md-3">
+    <ValidationMessage For="@(() => materialsubcategory.MaterialSubCategoryName)" ></ValidationMessage>
+
+    </div>*@
+</div>
+
+
+
+<div class="row">
+    <div class=" margin col-md-3 col-lg-3;  ">
+        <br />
+        Material Name
+        <SfTextBox ID="MaterialName" @bind-Value="material.MaterialName"></SfTextBox>
+       
+    </div>
+    <div class=" margin col-md-3 col-lg-3;  ">
+
+        <br />
+        Material Description
+        <SfTextBox Multiline="true" ID="MaterialDescription" @bind-Value="material.MaterialDescription"></SfTextBox>
+
+    </div>
+    <div class=" margin col-md-3 col-lg-3;  ">
+        <br />
+        HSN Code
+
+        <SfDropDownList TValue="string" TItem="Unit" @bind-Value="hsn_code" DataSource="@units">
+            <DropDownListFieldSettings Value="UnitName"></DropDownListFieldSettings>
+            <DropDownListEvents TValue="string" TItem="Unit" ValueChange="showMaterialType"></DropDownListEvents>
+
+        </SfDropDownList>
+    </div>
+</div>
+@* <div class="row">
+         <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => material.MaterialName)" ></ValidationMessage>
+
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => material.MaterialDescription)" ></ValidationMessage>
+
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => material.MaterialHSNCode)" ></ValidationMessage>
+
+         </div>
+ </div>*@
+<div class="row">
+    <div class=" margin col-md-3 col-lg-3;  ">
+
+        <br />
+        GST Percent<br />
+        <SfDropDownList TValue="string" TItem="GST" @bind-Value="gst_code" DataSource="@Val">
+            <DropDownListFieldSettings Value="Value"></DropDownListFieldSettings>
+            <DropDownListEvents TValue="string" TItem="GST" ValueChange="showMaterialType"></DropDownListEvents>
+        </SfDropDownList>
+        <br />
+
+    </div>
+    <div class=" margin col-md-3 col-lg-3;  ">
+
+
+        <br />
+        Opening Quantity<br />
+        <SfNumericTextBox TValue="decimal" @bind-Value=material.MaterialOpeningQuantity></SfNumericTextBox>
+        <br />
+
+    </div>
+    <div class=" margin col-md-3 col-lg-3;  ">
+
+
+        <br />
+        Buffer Level Quantity<br />
+        <SfNumericTextBox TValue="decimal" @bind-Value=material.MaterialBufferLevelQuantity></SfNumericTextBox>
+        <br />
+
+    </div>
+</div>
+
+@*<div class="row">
+         <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => material.MaterialGSTPercent)" ></ValidationMessage>
+
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => material.MaterialOpeningQuantity)" ></ValidationMessage>
+
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => material.MaterialBufferLevelQuantity)" ></ValidationMessage>
+
+         </div>
+     </div>*@
+<div class="row" style="align-content:center">
+    <div class=" margin col-md-3 col-lg-3;;" style="align-content:center">
+
+        <br />
+        Quality Required
+        <SfSwitch @bind-Checked="material.IsQualityRequire" OffLabel="OFF" OnLabel="ON" ValueChange="Change" TChecked="bool"></SfSwitch>
+
+
+    </div>
+    <div class=" margin col-md-3 col-lg-3;" style="align-content:center  ">
+
+        <br />
+        Unit
+
+        <SfDropDownList TValue="string" TItem="Unit" @bind-Value="material_unit" DataSource="@units">
+            <DropDownListFieldSettings Value="UnitName"></DropDownListFieldSettings>
+            <DropDownListEvents TValue="string" TItem="Unit" ValueChange="showMaterialType"></DropDownListEvents>
+        </SfDropDownList>
+
+
+    </div>
+    <div class=" margin col-md-3 col-lg-3;" style="align-content:center  ">
+    </div>
+</div>
+@*<div class="row">
+         <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => material.IsQualityRequire)" ></ValidationMessage>
+
+         </div>
+          <div class=" margin col-md-3">
+             <ValidationMessage For="@(() => material.UnitName)" ></ValidationMessage>
+
+         </div>
+          <div class=" margin col-md-3">
+
+         </div>
+ </div>*@
+<br />
+<br />
+
+<div class="row">
+    <div class=" margin col-md-3 col-lg-3 col-sm-3;  ">
+    </div>
+    <div class="margin col-md-3 col-lg-3 col-sm-3;  " style="text-align:center">
+
+        <button class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; font-weight:600; border-radius:10px; color:aliceblue; margin-bottom:40px;" @onclick="@HandleValidSubmit">
+            Create Material
+        </button>
+    </div>
+    <div class="margin col-md-3 col-lg-3 col-sm-3; ">
+    </div>
+</div>
+
+@*</EditForm>
+*@
+@code {
+
+    public int material_type_cat { get; set; }
+    public int material_cat_subcat { get; set; }
+
+    public int material_type { get; set; }
+    public int material_category { get; set; }
+    public int material_subcategory { get; set; }
+    public string gst_code { get; set; }
+    public string hsn_code { get; set; }
+    public string material_unit { get; set; }
+
+    public List<Material> materials { get; set; }
+    public List<Unit> units { get; set; }
+    public List<MaterialType> materialtypes { get; set; }
+    public List<MaterialCategory> materialcategorys { get; set; }
+    public List<MaterialSubCategory> materialsubcategorys { get; set; }
+    public List<MaterialCategory> MaterialCatCustom { get; set; } = null!;
+    public List<MaterialSubCategory> MaterialSubCatCustom { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        materials = await Task.Run(() => materialservice.GetMaterials());
+        units = await Task.Run(() => unitservice.GetUnits());
+        materialtypes = await Task.Run(() => materialtypeservice.GetMaterialTypes());
+        materialcategorys = await Task.Run(() => materialcategoryservice.GetMaterialCategories());
+        materialsubcategorys = await Task.Run(() => materialsubcategoryservice.GetMaterialSubCategories());
+    }
+    Material material = new Material();
+    Unit unit = new Unit();
+    MaterialType materialtype = new MaterialType();
+    MaterialCategory materialcategory = new MaterialCategory();
+    MaterialSubCategory materialsubcategory = new MaterialSubCategory();
+
+
+    // public async Task OnIDChange()
+    //{
+    //    MaterialCustom = await Task.Run(() => materialservice.GetMaterialByTypeID(material_type));
+    //}
+
+
+    protected async Task showMaterialType()
+    {
+        MaterialCatCustom = await Task.Run(() => materialcategoryservice.GetMaterialCategoryByTypeID(material_type));
+        MaterialSubCatCustom = await Task.Run(() => materialsubcategoryservice.GetMaterialSubCategoryByCategoryID(material_category));
+        material.MaterialTypeID = material_type;
+        material.MaterialCategoryID = material_category;
+        material.MaterialSubCategoryID = material_subcategory;
+        material.MaterialHSNCode = hsn_code;
+        material.MaterialGSTPercent = Convert.ToDecimal(gst_code);
+        material.UnitName = material_unit;
+    }
+
+    protected void showcat()
+    {
+        materialcategory.MaterialTypeID = material_type_cat;
+    }
+    protected void showsubcat()
+    {
+        materialsubcategory.MaterialCategoryID = material_cat_subcat;
+    }
+    private async void HandleValidSubmit()
+    {
+        try
+        {
+            await materialservice.AddMaterial(material);
+            await _context.SaveChangesAsync();
+            base.StateHasChanged();
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+
+        material = new Material();
+        base.StateHasChanged();
+
+    }
+    private async void CreateSubCategory()
+    {
+        try
+        {
+
+            await materialsubcategoryservice.AddMaterialSubCategory(materialsubcategory);
+            await dbcontext.SaveChangesAsync();
+
+            base.StateHasChanged();
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+
+        materialsubcategorys = await Task.Run(() => materialsubcategoryservice.GetMaterialSubCategories());
+
+        materialsubcategory = new MaterialSubCategory();
+        base.StateHasChanged();
+
+    }
+    private async void CreateCategory()
+    {
+        try
+        {
+
+            await materialcategoryservice.AddMaterialCategory(materialcategory);
+            await context.SaveChangesAsync();
+            base.StateHasChanged();
+
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+        materialcategorys = await Task.Run(() => materialcategoryservice.GetMaterialCategories());
+        materialcategory = new MaterialCategory();
+        base.StateHasChanged();
+    }
+}
+@code {
+    public class GST
+    {
+        public string Value { get; set; }
+
+    }
+    List<GST> Val = new List<GST>
+    {
+        new GST() { Value = "0"},
+        new GST() { Value = "5"},
+        new GST() { Value = "12"},
+        new GST() { Value = "18"}
+    };
+}
+@*Dialog*@
+@code {
+    private bool IsVisible { get; set; } = false;
+
+    private void OpenDialog()
+    {
+        this.IsVisible = true;
+    }
+
+    private void CloseDialog()
+    {
+        this.IsVisible = false;
+    }
+}
+@code {
+    private bool IsVisible1 { get; set; } = false;
+
+    private void OpenDialog1()
+    {
+        this.IsVisible1 = true;
+    }
+
+    private void CloseDialog1()
+    {
+        this.IsVisible1 = false;
+    }
+}
+@*toggle*@
+@code {
+    private bool isChecked = true;
+    private void Change(Syncfusion.Blazor.Buttons.ChangeEventArgs<bool> args)
+    {
+        //if (isChecked == false)
+        //{
+
+        //}
+    }
+}
+@code {
+
+
+
+}
+<style>
+    .margin {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #target {
+        min-height: 400px;
+        height: 300%;
+        position: relative;
+    }
+
+    .e-plus-icon::before {
+        content: '\e823';
+    }
+</style>
+
+@code {
+    //protected void showMaterialType()
+    //{
+    //    material.MaterialTypeID = material_type;
+    //    material.MaterialCategoryID = material_category;
+    //    material.MaterialSubCategoryID = material_subcategory;
+    //    material.MaterialHSNCode = hsn_code;
+    //    material.MaterialGSTPercent =Convert.ToDecimal( gst_code );
+    //    material.UnitName = material_unit;
+    //}
+}

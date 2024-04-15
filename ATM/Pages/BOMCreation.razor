@@ -1,0 +1,276 @@
+﻿@page "/BOMCreation"
+
+@using FluentValidation
+@using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Cards
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using ATM.Models
+@inject ProcessPlanService processplanservice
+@inject FinishedGoodsService finishedgoodsservice
+@inject MaterialService materialservice
+@inject BOMService bomservice
+@inject MaterialTypeService materialtypeservice
+@*@inject Temp_BOMService temp_bomservice*@
+@inject ATM.Data.ApplicationDbContext _context
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
+</head>
+
+  <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">   BOM Creation</h4>
+    </div><br />
+    <div class="row">
+        <div class=" margin col-md-3 col-lg-3;  ">
+             <br />
+            Finished Goods Name
+            <SfDropDownList  TValue="int" ID="FG_Name" TItem="FinishedGoods" @bind-Value="finished_goods_id" DataSource="@FinishedGood">
+            <DropDownListFieldSettings Value="FinishedGoodsID" Text="FG_Name"></DropDownListFieldSettings>
+            <DropDownListEvents TValue="int" TItem="FinishedGoods" ValueChange="TypeIDChange" ></DropDownListEvents>
+            </SfDropDownList>  
+             <br />
+        </div>
+        <div class=" margin col-md-3 col-lg-3;  ">
+           <br />
+           Process Plan
+         
+            <SfDropDownList TValue="int" TItem="ProcessPlan" @bind-Value="processplan_id" DataSource="@CustomPP">
+              <DropDownListFieldSettings Value="ProcessPlanID" Text="ProcessPlanName"></DropDownListFieldSettings>
+              <DropDownListEvents TValue="int" TItem="ProcessPlan" ValueChange="showdata"></DropDownListEvents>
+            </SfDropDownList>
+           <br>    
+        </div>
+      <div class=" margin col-md-3 col-lg-3;  "></div>
+    </div>
+
+<br /><br />
+
+  <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px">   Add Material</h4>
+    </div><br />
+    <div class="row">
+        <div class=" margin col-md-3 col-lg-3;  ">
+       
+          Material Type 
+            <br />
+            <SfDropDownList TValue="int" ID="MaterialType" TItem="MaterialType" @bind-Value="material_Type_id" DataSource="@Materialtypes">
+              <DropDownListFieldSettings Value="MaterialTypeID" Text="MaterialTypeName"></DropDownListFieldSettings>
+             <DropDownListEvents TValue="int" TItem="MaterialType" ValueChange="TypeIDChange1"></DropDownListEvents>
+            </SfDropDownList>           
+        </div>
+        <div class=" margin col-md-3 col-lg-3;  ">
+           
+           Material Name
+            <br />
+           <SfDropDownList TValue="int" ID="Material" TItem="Material" @bind-Value="material_name_id" DataSource="@Materials">
+              <DropDownListFieldSettings Value="MaterialID" Text="MaterialName"></DropDownListFieldSettings>
+             <DropDownListEvents TValue="int" TItem="Material" ValueChange="showdata"></DropDownListEvents>
+            </SfDropDownList>
+           
+             
+        </div>
+      <div class=" margin col-md-3 col-lg-3;  ">
+       
+          Quantity
+          <br />
+          <SfNumericTextBox TValue="decimal" @bind-Value=temp_bom.Quantity ></SfNumericTextBox>
+
+        
+      </div>
+    </div>
+    <br /><br />
+    @*<div class="row">
+        <div class=" margin col-md-3 col-lg-3; ">
+     
+        </div>
+        <div class=" margin col-md-3 col-lg-3; ">
+            @* <button  class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet; color:aliceblue; text-align:center;" @onclick = "@Save">
+              Save BOM</button>
+
+             <button  class="btn btn-primary e-btn:hover e-success margin" style="background-color:blueviolet; color:aliceblue; text-align:center;" @onclick="HandleValidSubmit">
+                 Add BOM </button>
+        </div>
+        <div class=" margin col-md-3 col-lg-3; ">
+
+        </div>
+    </div>*@
+    <div class="col-md-12" style="text-align:center">
+       <div class="margin col-md-3 col-lg-3 col-sm-3;  " style="text-align:center">
+       
+              <button  class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet;font-weight:600; border-radius:10px; color:aliceblue; margin-bottom:40px;" @onclick="HandleValidSubmit">
+                 Add BOM</button>
+             
+       </div>
+    </div>
+
+
+  <div class="col-12" style="background-color:blueviolet; border-radius:10px; border-bottom:double; border-left:double; border-bottom-color:#51005E">
+        <h4 style="padding-left:1%; font-weight:600; padding-right:1%; padding-top:1%; color:white; font-size:17px"> BOM Summary</h4>
+    </div><br />
+<div style="margin-left:auto; margin-right:auto;" >
+<SfGrid ID="Temp_ProcessPlanGrid" Width="auto" DataSource="@Temp_BOMs"  >
+
+    <GridPageSettings PageSize="5"></GridPageSettings>
+    <GridEvents   TValue="Temp_BOM">
+    </GridEvents>
+    <GridColumns >
+        <GridColumn  Field="@nameof(Temp_BOM.BOMID)" HeaderText="Sr.No." AllowFiltering="true"></GridColumn>
+        <GridForeignColumn Field="@nameof(Temp_BOM.FinishedGoodsID)" HeaderText="Finished Goods" ForeignDataSource="FinishedGood" ForeignKeyValue="FG_Name"> </GridForeignColumn>
+
+        <GridForeignColumn Field="@nameof(Temp_BOM.ProcessPlanID)" HeaderText="Process Plan" ForeignDataSource="ProcessPlans" ForeignKeyValue="ProcessPlanName"> </GridForeignColumn>
+        <GridForeignColumn Field="@nameof(Temp_BOM.MaterialTypeID)" HeaderText="Material Type Name" ForeignDataSource="Materialtypes" ForeignKeyValue="MaterialTypeName"> </GridForeignColumn>
+
+        <GridForeignColumn Field="@nameof(Temp_BOM.MaterialID)" HeaderText="Material Name" ForeignDataSource="Materials" ForeignKeyValue="MaterialName"> </GridForeignColumn>
+        <GridColumn  Field="@nameof(Temp_BOM.Quantity)" HeaderText="Quantity" AllowFiltering="true"></GridColumn>
+
+     </GridColumns> 
+</SfGrid>
+</div><br />
+
+ <div class="col-md-12" style="text-align:center">
+       <div class="margin col-md-3 col-lg-3 col-sm-3;  " style="text-align:center">
+             <br />
+              <button  class="btn btn-primary e-btn:hover e-success" style="background-color:blueviolet;font-weight:600; border-radius:10px; color:aliceblue; margin-bottom:40px;" @onclick="Save">
+                 Save BOM</button>
+             
+       </div>
+    </div>
+
+   <style>
+    .e-headercell{
+        
+       color:indigo;
+        font-size: 125px;
+    }
+    </style>
+@code {
+    public int  finished_goods_id { get; set; }
+    public int  material_name_id { get; set; }
+    public int  processplan_id { get; set; }
+    public int  material_Type_id { get; set; }
+
+    protected  void TypeIDChange()
+    {
+        CustomPP =  Task.Run(() => processplanservice.GetFGByID(finished_goods_id)).Result;
+        temp_bom.FinishedGoodsID = finished_goods_id;
+
+    }
+    public async Task TypeIDChange1()
+    {
+        //temp_bom.MaterialTypeID = material_type_id;
+        temp_bom.MaterialTypeID = material_Type_id;
+        Materials = await Task.Run(() => materialservice.GetMaterialTypeID(material_Type_id));
+    }
+
+    protected void showdata()
+    {
+
+        //temp_bom.FinishedGoodsID = finished_goods_name;
+        //temp_bom.MaterialTypeID = material_type_id;
+        temp_bom.MaterialID = material_name_id;
+        temp_bom.ProcessPlanID = processplan_id;
+    }
+
+    public List<BOM> BOMs { get; set; }
+
+    public List<Temp_BOM>  Temp_BOMs { get; set; }
+    SfGrid<Temp_BOM> TEmpBOMGrid { get; set; } = null!;
+
+    public List<ProcessPlan> ProcessPlans { get; set; }
+    public List<FinishedGoods> FinishedGood { get; set; }
+    public List<Material> Materials { get; set; }
+    public List<MaterialType> Materialtypes { get; set;}
+    public List<ProcessPlan> CustomPP { get; set;}
+
+    protected override async Task OnInitializedAsync()
+    {
+        ProcessPlans = await Task.Run(() => processplanservice.GetProcessPlans());
+        FinishedGood = await Task.Run(() => finishedgoodsservice.GetFinishedGoods());
+        Materialtypes = await Task.Run(() => materialtypeservice.GetMaterialTypeBOM());
+        //Materialtypes = await.Task.Run(() => materialtypeservice.GetMaterialTypeBOM());
+        Temp_BOMs = await Task.Run(() => bomservice.GetTempBOM());
+
+        temp_bom.FinishedGoodsID = finished_goods_id;
+        temp_bom.MaterialID = material_name_id;
+        temp_bom.ProcessPlanID = processplan_id;
+    } 
+
+    ProcessPlan processplan = new ProcessPlan();
+    Material material = new Material();
+    BOM bom = new BOM();
+    FinishedGoods finishedgoods = new FinishedGoods();
+    Temp_BOM temp_bom = new Temp_BOM(); 
+
+    private async void HandleValidSubmit()
+    {
+        try
+        {
+            temp_bom.CreatedBy="A";
+            temp_bom.CreationTime = DateTime.Now;
+
+            await bomservice.AddTempBOM(temp_bom);
+            await _context.SaveChangesAsync();
+            base.StateHasChanged();
+
+            Temp_BOMs = await Task.Run(() => bomservice.GetTempBOM());
+            base.StateHasChanged();
+            temp_bom.FinishedGoodsID = finished_goods_id;
+            base.StateHasChanged();
+            temp_bom.ProcessPlanID = processplan_id;
+            base.StateHasChanged();
+
+        }
+        catch
+        {
+            base.StateHasChanged();
+        }
+        temp_bom = new Temp_BOM(); 
+        base.StateHasChanged();
+
+    }
+    private async void Save()
+    {
+        foreach (var temp_bom in Temp_BOMs)
+        {
+            BOM bom = new BOM();
+            {
+                bom.CreatedBy = "A";
+                bom.CreationTime = DateTime.Now;
+
+                bom.FinishedGoodsID = temp_bom.FinishedGoodsID;
+                bom.ProcessPlanID = temp_bom.ProcessPlanID;
+                bom.MaterialID = temp_bom.MaterialID;
+                bom.Quantity = temp_bom.Quantity;
+                bom.MaterialTypeID = temp_bom.MaterialTypeID;
+            };
+            await bomservice.AddBOM(bom);
+            await _context.SaveChangesAsync();
+            bom = new BOM();
+            base.StateHasChanged(); 
+
+        } 
+        var custom = new Customer();
+
+        _context.Database.ExecuteSqlRaw("Truncate Table Tbl_Temp_BOM");
+        await _context.SaveChangesAsync();
+
+        Temp_BOMs = await Task.Run(() => bomservice.GetTempBOM());
+        await _context.SaveChangesAsync();
+        base.StateHasChanged();
+
+
+    }
+}
+<style>
+    .margin{
+        margin-left:auto;
+        margin-right:auto;
+    }
+    
+   
+</style>
